@@ -76,13 +76,15 @@ class Settings(BaseSettings):
         }
         return project_names.get(self.ENVIRONMENT, f"qfeed-{self.ENVIRONMENT}")
 
-    def configure_langsmith(self):
+    def configure_langsmith(self, enabled: bool = True):
         """LangSmith 환경변수 설정"""
-        if self.LANGCHAIN_API_KEY and self.LANGCHAIN_TRACING_V2:
+        if self.LANGCHAIN_API_KEY and enabled:
             os.environ["LANGCHAIN_TRACING_V2"] = self.LANGCHAIN_TRACING_V2
             os.environ["LANGCHAIN_API_KEY"] = self.LANGCHAIN_API_KEY
             os.environ["LANGCHAIN_PROJECT"] = self.langchain_project_name
             os.environ["LANGCHAIN_ENDPOINT"] = self.LANGSMITH_ENDPOINT
+        else:
+            os.environ["LANGCHAIN_TRACING_V2"] = "false"
     
     model_config = {
         "env_file": ".env",

@@ -19,8 +19,10 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """앱 시작/종료 시 실행되는 lifespan 컨텍스트"""
+
+    settings.configure_langsmith(enabled=False)
     logger.info("embedding model loading start")
-    
+
     # 1. Embedding 모델 로딩 (가장 오래 걸림)
     try:
         embedding_provider = get_embedding_provider()
@@ -45,7 +47,7 @@ async def lifespan(app: FastAPI):
     #     logger.info("✅ BadCaseChecker 초기화 완료")
     # except Exception as e:
     #     logger.error(f"❌ BadCaseChecker 초기화 실패: {e}")
-    
+    settings.configure_langsmith(enabled=True)
     logger.info("finish model loading")
     
     yield  
