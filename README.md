@@ -85,11 +85,11 @@ uv run uvicorn main:app
 
 ### 환경별 설정 방식
 
-| 환경         | 설정 로드 방식          | 필요한 환경변수                                                         |
-| ------------ | ----------------------- | ----------------------------------------------------------------------- |
-| `test`       | `.env` 파일             | `ENVIRONMENT=test`                                                      |
-| `dev`        | AWS SSM Parameter Store | `ENVIRONMENT`, `AWS_PARAMETER_STORE_PATH`, `GPU_STT_URL`, `GPU_LLM_URL` |
-| `production` | AWS SSM Parameter Store | `ENVIRONMENT`, `AWS_PARAMETER_STORE_PATH`, `GPU_STT_URL`, `GPU_LLM_URL` |
+| 환경   | 설정 로드 방식          | 필요한 환경변수                                                         |
+| ------ | ----------------------- | ----------------------------------------------------------------------- |
+| `test` | `.env` 파일             | `ENVIRONMENT=test`                                                      |
+| `dev`  | AWS SSM Parameter Store | `ENVIRONMENT`, `AWS_PARAMETER_STORE_PATH`, `GPU_STT_URL`, `GPU_LLM_URL` |
+| `prod` | AWS SSM Parameter Store | `ENVIRONMENT`, `AWS_PARAMETER_STORE_PATH`, `GPU_STT_URL`, `GPU_LLM_URL` |
 
 ---
 

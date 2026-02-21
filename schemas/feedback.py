@@ -173,7 +173,7 @@ class RubricEvaluationResult(BaseModel):
 
 class QATurn(BaseModel):
     question: str = Field(..., description="질문 텍스트")
-    category: QuestionCategory | None = Field(None, description="문제 카테고리")
+    category: QuestionCategory = Field(..., description="문제 카테고리")
     answer_text: str = Field(..., description="답변 텍스트")
     turn_type: Literal["new_topic", "follow_up"] = Field(..., description="질문 유형")
     turn_order: int = Field(..., description="전체 세션 내 순서 (0부터)")
