@@ -6,9 +6,11 @@ from typing import Type, TypeVar
 
 import httpx
 from pydantic import BaseModel, ValidationError
+from langsmith import traceable
 
 from core.config import get_settings
 from core.logging import get_logger, get_metrics_logger
+from core.tracing import record_llm_metrics, record_tool_metrics
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 
@@ -26,16 +28,17 @@ class VLLMProvider:
         self,
         base_url: str | None = None,
         model: str | None = None,
-        timeout: float = 180.0,
+        timeout: float = 120.0,
     ):
-        self.base_url = base_url or settings.VLLM_BASE_URL  
-        self.model = model or settings.VLLM_MODEL_ID  
+        self.base_url = base_url or settings.GPU_LLM_URL
+        self.model = model or settings.LLM_MODEL_ID  
         self.timeout = timeout
 
     @property
     def provider_name(self) -> str:
         return "vllm"
 
+    @traceable(run_type="llm", name="vllm_generate")
     async def generate(
         self,
         prompt: str,
@@ -56,9 +59,23 @@ class VLLMProvider:
             "max_tokens": max_tokens,
         }
 
-        response = await self._call_api(payload, task_name)
-        return response["choices"][0]["message"]["content"]
+        result, latency_ms = await self._call_api(payload, task_name)
 
+        # 메트릭 기록
+        usage = result.get("usage", {})
+        record_llm_metrics(
+            provider="vllm",
+            model=self.model,
+            task=task_name,
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            latency_ms=latency_ms,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return result["choices"][0]["message"]["content"]
+
+    @traceable(run_type="llm", name="vllm_generate_structured")
     async def generate_structured(
         self,
         prompt: str,
@@ -83,23 +100,57 @@ class VLLMProvider:
             }
         }
 
-        response = await self._call_api(payload, task_name)
-        content = response["choices"][0]["message"]["content"]
+        result, latency_ms = await self._call_api(payload, task_name)
+        content = result["choices"][0]["message"]["content"]
 
+        # 메트릭 기록
+        usage = result.get("usage", {})
+        record_llm_metrics(
+            provider="vllm",
+            model=self.model,
+            task=task_name,
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            latency_ms=latency_ms,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
         try:
             parsed_data = json.loads(content)
             result = response_model.model_validate(parsed_data)
             logger.debug(f"JSON 파싱 성공 | model={task_name}")
             return result
         except json.JSONDecodeError as e:
+            record_tool_metrics(
+                tool_name="json_parse",
+                latency_ms=0,
+                success=False,
+                task=task_name,
+                error=str(e)[:200],
+            )
             logger.error(f"JSON 파싱 실패 | model={task_name} | error={e} | content={content[:200]}")
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
         except ValidationError as e:
+            record_tool_metrics(
+                tool_name="json_parse",
+                latency_ms=0,
+                success=False,
+                task=task_name,
+                error=str(e)[:200],
+            )
             logger.error(f"Pydantic 검증 실패 | model={task_name} | error={e}")
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
         except Exception as e:
+            record_tool_metrics(
+                tool_name="json_parse",
+                latency_ms=0,
+                success=False,
+                task=task_name,
+                error=str(e)[:200],
+            )
             logger.error(f"응답 처리 실패 | model={task_name} | {type(e).__name__}: {e}")
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
+        
 
     async def _call_api(
         self,
@@ -108,7 +159,6 @@ class VLLMProvider:
     ) -> dict:
         """vLLM API 호출 - 공통 에러 처리"""
         start_time = time.perf_counter()
-        prompt_length = sum(len(m["content"]) for m in payload["messages"])
         url = f"{self.base_url}/v1/chat/completions"
 
         logger.debug(f"vLLM API 호출 시작 | task={task} | model={self.model}")
@@ -120,29 +170,15 @@ class VLLMProvider:
                     json=payload,
                     headers={"Content-Type": "application/json"},
                 )
+                print(response)
                 response.raise_for_status()
                 result = response.json()
 
             elapsed_ms = (time.perf_counter() - start_time) * 1000
-            content = result["choices"][0]["message"]["content"]
-            response_length = len(content) if content else 0
-
-            # 토큰 사용량 (vLLM이 제공하는 경우)
-            usage = result.get("usage", {})
-            prompt_tokens = usage.get("prompt_tokens", 0)
-            completion_tokens = usage.get("completion_tokens", 0)
 
             logger.debug(f"vLLM API 완료 | task={task} | {elapsed_ms:.2f}ms")
 
-            # 메트릭 로깅
-            metrics_logger.info(
-                f"LLM_METRIC | provider=vllm | model={self.model} | task={task} | "
-                f"prompt_chars={prompt_length} | response_chars={response_length} | "
-                f"prompt_tokens={prompt_tokens} | completion_tokens={completion_tokens} | "
-                f"latency_ms={elapsed_ms:.2f}"
-            )
-
-            return result
+            return result, elapsed_ms
 
         except httpx.TimeoutException as e:
             elapsed_ms = (time.perf_counter() - start_time) * 1000

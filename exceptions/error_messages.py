@@ -22,16 +22,27 @@ class ErrorMessage(str, Enum):
     ANSWER_TOO_SHORT = "answer_too_short"
     ANSWER_TOO_LONG = "answer_too_long"
     INVALID_ANSWER_FORMAT = "invalid_answer_format"
+    BAD_CASE_CHECK_FAILED = "bad_case_check_failed"
     FEEDBACK_ALREADY_IN_PROGRESS = "feedback_already_in_progress"
     RUBRIC_EVALUATION_FAILED = "rubric_evaluation_failed"
     FEEDBACK_GENERATION_FAILED = "feedback_generation_failed"
+
+    #질문 생성 관련 
+    QUESTION_GENERATION_FAILED = "question_generation_failed"
 
     # LLM 관련
     LLM_SERVICE_UNAVAILABLE = "llm_service_unavailable"
     LLM_RESPONSE_PARSE_FAILED = "llm_response_parse_failed"
     LLM_TIMEOUT = "llm_timeout"
 
+    # TTS 관련
+    TTS_TIMEOUT = "tts_timeout"
+    TTS_CONVERSION_FAILED = "tts_conversion_failed"
+    TTS_SERVICE_UNAVAILABLE = "tts_service_unavailable"
+    TTS_VOICE_NOT_FOUND = "tts_voice_not_found"
+
     # 공통
+    SERVER_CONNECTION_FAILED = "server_connection_failed"
     API_KEY_INVALID = "api_key_invalid"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
     INTERNAL_SERVER_ERROR = "internal_server_error"
@@ -57,11 +68,13 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
 
     # 404 Not Found
     ErrorMessage.AUDIO_NOT_FOUND: 404,
+    ErrorMessage.TTS_VOICE_NOT_FOUND: 404,
 
     # 408 Request Timeout
     ErrorMessage.AUDIO_DOWNLOAD_TIMEOUT: 408,
     ErrorMessage.STT_TIMEOUT: 408,
     ErrorMessage.LLM_TIMEOUT: 408,
+    ErrorMessage.TTS_TIMEOUT: 408,
 
     # 409 Conflict
     ErrorMessage.FEEDBACK_ALREADY_IN_PROGRESS: 409,
@@ -73,16 +86,22 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.RATE_LIMIT_EXCEEDED: 429,
 
     # 500 Internal Server Error
+    ErrorMessage.BAD_CASE_CHECK_FAILED : 500,
+    ErrorMessage.SERVER_CONNECTION_FAILED: 500,
     ErrorMessage.STT_CONVERSION_FAILED: 500,
+    ErrorMessage.TTS_CONVERSION_FAILED: 500,
     ErrorMessage.FEEDBACK_GENERATION_FAILED: 500,
     ErrorMessage.RUBRIC_EVALUATION_FAILED: 500,
     ErrorMessage.INTERNAL_SERVER_ERROR: 500,
+    ErrorMessage.QUESTION_GENERATION_FAILED: 500,
     
 
     # 502 Bad Gateway
+    ErrorMessage.SERVER_CONNECTION_FAILED: 502,
     ErrorMessage.STT_SERVICE_UNAVAILABLE: 502,
     ErrorMessage.LLM_SERVICE_UNAVAILABLE: 502,
     ErrorMessage.LLM_RESPONSE_PARSE_FAILED: 502,
+    ErrorMessage.TTS_SERVICE_UNAVAILABLE: 502,
 
     # 503 Service Unavailable
     ErrorMessage.SERVICE_TEMPORARILY_UNAVAILABLE: 503,

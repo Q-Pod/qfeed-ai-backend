@@ -3,19 +3,28 @@
 ## 테스트 구조
 
 ```
-tests/
-├── conftest.py         # 공통 fixtures (app, client, 마커)
-├── unit/               # 단위 테스트 (Mock 사용, 빠른 실행)
-│   ├── conftest.py     # Unit 전용 fixtures
-│   ├── providers/      # LLM, STT Provider 테스트
-│   └── services/       # 서비스 로직 테스트
-├── integration/        # 통합 테스트 (Router → Service, 외부 API Mock)
-│   ├── conftest.py     # Integration 전용 fixtures
-│   ├── test_feedback_api.py
-│   └── test_stt_api.py
-└── e2e/                # E2E 테스트 (실제 서버 + 실제 API)
-    ├── conftest.py     # E2E 전용 fixtures
-    └── test_feedback_e2e.py
+tests
+│   ├── conftest.py
+│   ├── e2e
+│   │   ├── conftest.py
+│   │   ├── test_feedback_e2e.py
+│   │   ├── test_golden_dataset.py
+│   │   ├── test_stt_e2e.py
+│   │   └── test_tts_e2e.py
+│   ├── integration
+│   │   ├── conftest.py
+│   │   ├── test_feedback_api.py
+│   │   └── test_stt_api.py
+│   ├── README.md
+│   └── unit
+│       ├── conftest.py
+│       ├── providers
+│       │   ├── test_llm_gemini.py
+│       │   └── test_stt_huggingface.py
+│       └── services
+│           ├── test_answer_analyzer.py
+│           ├── test_feedback_service.py
+│           └── test_stt_service.py
 ```
 
 ## 테스트 레벨 비교
@@ -54,6 +63,18 @@ uv run uvicorn main:app --port 8000
 
 # 2. 터미널 2: E2E 테스트 실행
 uv run pytest tests/e2e -v
+```
+
+### STT e2e test
+
+```bash
+uv run pytest tests/e2e/test_stt_e2e.py -s -v
+```
+
+### TTS e2e test
+
+```bash
+uv run pytest tests/e2e/test_tts_e2e.py -s -v
 ```
 
 ```bash

@@ -5,7 +5,7 @@ from schemas.common import BaseResponse
 
 class STTRequest(BaseModel):
     user_id : int = Field(..., description="사용자 ID")
-    session_id : int | None = Field(None, description="세션 ID")
+    session_id : str | None = Field(None, description="세션 ID")
     audio_url : str = Field(..., description="음성 파일 URL")
 
     # 오디오 파일 확장자 검증

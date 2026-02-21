@@ -1,11 +1,8 @@
 # providers/llm/base.py
-
 from typing import Protocol, TypeVar, Type
 from pydantic import BaseModel
 
-
 T = TypeVar("T", bound=BaseModel)
-
 
 class LLMProvider(Protocol):
     """LLM Provider 인터페이스"""
