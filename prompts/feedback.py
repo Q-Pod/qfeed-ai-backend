@@ -1,5 +1,5 @@
 # prompts/feedback.py
-from schemas.feedback import RubricEvaluationResult
+from schemas.feedback import RubricEvaluationResult, QuestionCategory
 
 """피드백 생성 프롬프트"""
 
@@ -118,8 +118,8 @@ SINGLE_TOPIC_SYSTEM_PROMPT = {
 
 ## 2. 종합 피드백 (Overall Feedback)  
 전체 면접 세션을 아우르는 피드백을 작성합니다.
-- **잘한 점**: 전반적인 강점, 일관된 장점 패턴 (200-800자)
-- **개선할 점**: 전반적인 개선 방향, 공통적인 약점 (200-800자)
+- **잘한 점**: 전반적인 강점, 일관된 장점 패턴 (200-500자)
+- **개선할 점**: 전반적인 개선 방향, 공통적인 약점 (200-500자)
 
 # 작성 가이드
 
@@ -160,8 +160,8 @@ SINGLE_TOPIC_SYSTEM_PROMPT = {
 
 ## 2. 종합 피드백 (Overall Feedback)  
 전체 면접 세션을 아우르는 피드백을 작성합니다.
-- **잘한 점**: 전반적인 강점, 일관된 장점 패턴 (200-800자)
-- **개선할 점**: 전반적인 개선 방향, 공통적인 약점 (200-800자)
+- **잘한 점**: 전반적인 강점, 일관된 장점 패턴 (100-500자)
+- **개선할 점**: 전반적인 개선 방향, 공통적인 약점 (100-500자)
 
 # 작성 가이드
 
@@ -197,6 +197,11 @@ SINGLE_TOPIC_SYSTEM_PROMPT = {
 """
 }
 
+def _format_category(category: QuestionCategory | None) -> str:
+    """카테고리를 문자열로 포맷팅"""
+    if category is None:
+        return "N/A"
+    return category.value if hasattr(category, 'value') else str(category)
 
 def build_single_topic_feedback_prompt(
     question_type: str,
@@ -206,21 +211,22 @@ def build_single_topic_feedback_prompt(
 ) -> str:
     """단일 토픽용 프롬프트"""
     topic_data = list(grouped_interview.values())[0]
+    category = topic_data.get("category")
     
     return f"""다음 면접 답변을 분석하여 종합 피드백을 작성해주세요.
 
 [질문 유형] {question_type}
-[카테고리] {category or "N/A"}
+[카테고리] {_format_category(category)}
 
 [면접 Q&A]
 {topic_data["qa_text"]}
 
 [루브릭 평가 결과]
-- 정확도: {rubric_result.accuracy}/5 - {rubric_result.accuracy_rationale}
-- 논리력: {rubric_result.logic}/5 - {rubric_result.logic_rationale}
-- 구체성: {rubric_result.specificity}/5 - {rubric_result.specificity_rationale}
-- 완성도: {rubric_result.completeness}/5 - {rubric_result.completeness_rationale}
-- 전달력: {rubric_result.delivery}/5 - {rubric_result.delivery_rationale}
+- 정확도: {rubric_result.accuracy}/5 
+- 논리력: {rubric_result.logic}/5 
+- 구체성: {rubric_result.specificity}/5 
+- 완성도: {rubric_result.completeness}/5 
+- 전달력: {rubric_result.delivery}/5 
 
 위 내용을 바탕으로 잘한 점과 개선할 점을 작성해주세요."""
 
@@ -237,9 +243,13 @@ def build_multi_topic_feedback_prompt(
     # 토픽별 인터뷰 텍스트 포맷팅
     interview_sections = []
     for topic_id, topic_data in sorted(grouped_interview.items()):
+        category = topic_data.get("category")
+        category_str = _format_category(category)
+        
         section = f"""
-            ### 토픽 {topic_id}: {topic_data["main_question"]}
-            {topic_data["qa_text"]}"""
+        ### 토픽 {topic_id} [{category_str}]: {topic_data["main_question"]}
+        {topic_data["qa_text"]}
+        """
         interview_sections.append(section)
     
     interview_text = "\n".join(interview_sections)
@@ -247,17 +257,16 @@ def build_multi_topic_feedback_prompt(
     return f"""다음 면접 세션을 분석하여 토픽별 피드백과 종합 피드백을 작성해주세요.
 
 [질문 유형] {question_type}
-[카테고리] {category or "N/A"}
 
 [면접 히스토리]
 {interview_text}
 
 [루브릭 평가 결과 - 종합]
-- 정확도: {rubric_result.accuracy}/5 - {rubric_result.accuracy_rationale}
-- 논리력: {rubric_result.logic}/5 - {rubric_result.logic_rationale}
-- 구체성: {rubric_result.specificity}/5 - {rubric_result.specificity_rationale}
-- 완성도: {rubric_result.completeness}/5 - {rubric_result.completeness_rationale}
-- 전달력: {rubric_result.delivery}/5 - {rubric_result.delivery_rationale}
+- 정확도: {rubric_result.accuracy}/5 
+- 논리력: {rubric_result.logic}/5 
+- 구체성: {rubric_result.specificity}/5 
+- 완성도: {rubric_result.completeness}/5 
+- 전달력: {rubric_result.delivery}/5 
 
 위 내용을 바탕으로:
 1. 각 토픽(토픽 ID별)에 대한 개별 피드백

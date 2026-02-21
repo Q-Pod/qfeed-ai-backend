@@ -1,10 +1,11 @@
 # prompts/question_router.py
 
 """라우터 분기 결정 프롬프트"""
+from schemas.feedback import QuestionCategory
 
 ROUTER_SYSTEM_PROMPT = {
     "gemini": """\
-당신은 기술 면접 진행자입니다. 현재 면접 상황을 분석하여 다음 행동을 결정해야 합니다.
+당신은 기술 면접 진행자입니다. 현재 면접 상황과 지원자의 마지막 답변 수준을 분석하여 다음 행동을 결정하세요.
 
 ## 당신의 역할
 면접 히스토리를 바탕으로 다음 중 하나를 선택하세요:
@@ -14,22 +15,21 @@ ROUTER_SYSTEM_PROMPT = {
 
 ## 판단 기준
 
-### follow_up 선택 조건
-- 마지막 답변이 불완전하거나 모호한 경우
-- 답변에서 더 깊이 파고들 수 있는 기술적 포인트가 있는 경우
-- 현재 토픽에서 아직 확인하지 않은 중요한 개념이 있는 경우
-- 해당 토픽의 꼬리질문 횟수가 최대치에 도달하지 않은 경우
+1. follow_up 선택 조건 
+- 답변이 모호하거나 피상적이어서 추가 검증이 필요한 경우
+- 핵심 키워드는 언급했으나, 그 원리나 동작 방식을 제대로 이해하고 있는지 확인해야 하는 경우
+- 지원자가 흥미로운 실무 경험이나 트러블슈팅 사례를 언급하여 구체적으로 파고들 가치가 있는 경우
 
-### new_topic 선택 조건
-- 현재 토픽을 충분히 다룬 경우 (꼬리질문 최대치 도달 또는 답변이 완벽함)
-- 면접 히스토리가 비어있는 경우 (세션 시작)
-- 다른 중요한 기술 영역을 평가해야 하는 경우
+2. new_topic 선택 조건
+- 지원자가 해당 개념을 이미 완벽하고 깊이 있게 설명하여 더 이상의 질문이 무의미한 경우
+- 지원자가 해당 주제에 대해 전혀 모르거나 엉뚱한 대답을 하여, 계속 파고드는 것이 시간 낭비인 경우
+- 세션의 첫 시작이어서 새로운 질문을 던져야 하는 경우
 
-### end_session 선택 조건
-- 설정된 최대 토픽 수에 도달한 경우
-- 모든 주요 영역을 충분히 평가한 경우
+3. end_session 선택 조건
+- 참고: 물리적인 종료 조건은 시스템에서 처리합니다 
+- 지원자가 모든 주요 기술 영역에 대해 자신의 역량을 명확히 증명했으며, 더 이상 평가할 영역이 남지 않은 예외적인 경우에만 선택하세요.
 """,
-    "vllm": """당신은 기술 면접 진행자입니다. 현재 면접 상황을 분석하여 다음 행동을 결정해야 합니다.
+    "vllm": """당신은 기술 면접 진행자입니다. 현재 면접 상황과 지원자의 마지막 답변 수준을 분석하여 다음 행동을 결정하세요.
 
 ## 당신의 역할
 면접 히스토리를 바탕으로 다음 중 하나를 선택하세요:
@@ -39,21 +39,19 @@ ROUTER_SYSTEM_PROMPT = {
 
 ## 판단 기준
 
-### follow_up 선택 조건
-- 마지막 답변이 불완전하거나 모호한 경우
-- 답변에서 더 깊이 파고들 수 있는 기술적 포인트가 있는 경우
-- 현재 토픽에서 아직 확인하지 않은 중요한 개념이 있는 경우
-- 해당 토픽의 꼬리질문 횟수가 최대치에 도달하지 않은 경우
+1. follow_up 선택 조건 
+- 답변이 모호하거나 피상적이어서 추가 검증이 필요한 경우
+- 핵심 키워드는 언급했으나, 그 원리나 동작 방식을 제대로 이해하고 있는지 확인해야 하는 경우
+- 지원자가 흥미로운 실무 경험이나 트러블슈팅 사례를 언급하여 구체적으로 파고들 가치가 있는 경우
 
-### new_topic 선택 조건
-- 현재 토픽을 충분히 다룬 경우 (꼬리질문 최대치 도달 또는 답변이 완벽함)
-- 면접 히스토리가 비어있는 경우 (세션 시작)
-- 다른 중요한 기술 영역을 평가해야 하는 경우
+2. new_topic 선택 조건
+- 지원자가 해당 개념을 이미 완벽하고 깊이 있게 설명하여 더 이상의 질문이 무의미한 경우
+- 지원자가 해당 주제에 대해 전혀 모르거나 엉뚱한 대답을 하여, 계속 파고드는 것이 시간 낭비인 경우
+- 세션의 첫 시작이어서 새로운 질문을 던져야 하는 경우
 
-### end_session 선택 조건
-- 설정된 최대 토픽 수에 도달한 경우
-- 모든 주요 영역을 충분히 평가한 경우
-"""
+3. end_session 선택 조건
+- 참고: 물리적인 종료 조건은 시스템에서 처리합니다 
+- 지원자가 모든 주요 기술 영역에 대해 자신의 역량을 명확히 증명했으며, 더 이상 평가할 영역이 남지 않은 예외적인 경우에만 선택하세요."""
 }
 
 
@@ -61,10 +59,16 @@ def get_router_system_prompt(provider: str) -> str:
     """Provider에 맞는 시스템 프롬프트 반환"""
     return ROUTER_SYSTEM_PROMPT.get(provider, ROUTER_SYSTEM_PROMPT["gemini"])
 
+def _format_category(category: QuestionCategory | None) -> str:
+    """카테고리를 문자열로 포맷팅"""
+    if category is None:
+        return "N/A"
+    return category.value if hasattr(category, 'value') else str(category)
+
 
 def build_router_prompt(
     question_type: str,
-    category: str | None,
+    category: QuestionCategory | None,
     max_topics: int,
     max_follow_ups_per_topic: int,
     current_topic_count: int,
@@ -78,7 +82,7 @@ def build_router_prompt(
     return f"""\
 ## 면접 설정
 - 질문 유형: {question_type}
-- 카테고리: {category or "일반"}
+- 질문 카테고리 : {category}
 - 최대 토픽 수: {max_topics}
 - 토픽당 최대 꼬리질문 수: {max_follow_ups_per_topic}
 
@@ -102,9 +106,6 @@ def _format_interview_history(history: list) -> str:
     formatted = []
     for turn in history:
         prefix = "[메인]" if turn.turn_type == "main" else "[꼬리]"
-        formatted.append(
-            f"{prefix} Topic {turn.topic_id}, Turn {turn.turn_order}\n"
-            f"Q: {turn.question}\n"
-            f"A: {turn.answer_text}"
-        )
+        cat_str = _format_category(turn.category)
+        formatted.append(f"{prefix} [{cat_str}] Topic {turn.topic_id}\nQ: {turn.question}\nA: {turn.answer_text}")
     return "\n\n".join(formatted)

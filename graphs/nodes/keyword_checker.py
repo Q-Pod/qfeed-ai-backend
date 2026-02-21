@@ -45,7 +45,7 @@ def _get_sliding_windows(text: str, window_size: int = 30, stride: int = 15) -> 
 
 def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.5) -> dict:
     """키워드 커버리지 체크 노드 (슬라이딩 윈도우 방식)"""
-    logger.debug(f"키워드 체크 시작 | interview_type={state['interview_type']}")
+    logger.debug(f"keyword checker start | interview_type={state['interview_type']}")
 
     # 실전모드의 경우 필수키워드 체크 안함
     if state["interview_type"] == "REAL_INTERVIEW":
@@ -61,7 +61,7 @@ def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.5
     # 키워드 없으면 스킵
     keywords = state.get("keywords") or []
     if not keywords:
-        logger.debug("키워드 없음 - 스킵")
+        logger.debug("No keywords - skip")
         return {
             "keyword_result": KeywordCheckResult(
                 covered_keywords=[],
@@ -99,7 +99,7 @@ def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.5
     
     coverage = len(covered) / len(state["keywords"])
 
-    logger.info(f"키워드 체크 완료 | covered={len(covered)}/{len(keywords)}, coverage={coverage:.2%}")
+    logger.info(f"keyword check success | covered={len(covered)}/{len(keywords)}, coverage={coverage:.2%}")
     
     return {
         "keyword_result": KeywordCheckResult(

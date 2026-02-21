@@ -22,10 +22,13 @@ def group_turns_by_topic(turns: list[QATurn]) -> dict[int, dict]:
         sorted_turns = sorted(topic_turns, key=lambda t: t.turn_order)
 
         # 메인 질문 추출 (첫 번째 main 타입)
-        main_question = next(
-            (t.question for t in sorted_turns if t.turn_type == "main"),
-            sorted_turns[0].question  # fallback
+        main_turn = next(
+            (t for t in sorted_turns if t.turn_type == "main"),
+            sorted_turns[0]  # fallback
         )
+        main_question = main_turn.question
+        # 토픽 카테고리 추출 (메인 질문의 카테고리)
+        topic_category = main_turn.category
 
         # Q&A 텍스트 포맷팅
         qa_parts = []
@@ -35,6 +38,7 @@ def group_turns_by_topic(turns: list[QATurn]) -> dict[int, dict]:
         
         result[topic_id] = {
             "main_question": main_question,
+            "category": topic_category,
             "qa_text": "\n\n".join(qa_parts),
         }
     return result
@@ -44,7 +48,7 @@ async def feedback_generator(
     state: FeedbackGraphState
 ) -> dict:
     """피드백 텍스트 생성 노드"""
-    logger.debug("피드백 생성 시작")
+    logger.debug("feedback generator start")
     
     llm = get_llm_provider()
 
@@ -59,7 +63,7 @@ async def feedback_generator(
     
     if is_single_topic:
         # 단일 토픽: 종합 피드백만 생성
-        logger.debug("단일 토픽 피드백 생성")
+        logger.debug("single topic feedback generate")
         result = await llm.generate_structured(
             prompt=build_single_topic_feedback_prompt(
                 question_type=state["question_type"].value,
@@ -69,10 +73,10 @@ async def feedback_generator(
             ),
             response_model=OverallFeedback,  # 종합만
             system_prompt=system_prompt,
-            temperature=0.3,
-            max_tokens=2000,
+            temperature=0.5,
+            max_tokens=500,
         )
-        logger.info("피드백 생성 완료")
+        logger.info("feedback generate completed")
         return {
             "topics_feedback": None,
             "overall_feedback": result,
@@ -80,7 +84,7 @@ async def feedback_generator(
         }
     else:
         # 멀티 토픽: 토픽별 + 종합 피드백
-        logger.debug(f"멀티 토픽 피드백 생성 | topics={len(grouped_interview)}")
+        logger.debug(f"multi feedback generate completed | topics={len(grouped_interview)}")
         result = await llm.generate_structured(
             prompt=build_multi_topic_feedback_prompt(
                 question_type=state["question_type"].value,
@@ -90,10 +94,10 @@ async def feedback_generator(
             ),
             response_model=FeedbackGenerationResult,
             system_prompt=system_prompt,
-            temperature=0.3,
-            max_tokens=4000,
+            temperature=0.5,
+            max_tokens=1500,
         )
-        logger.info("피드백 생성 완료")
+        logger.info("feedback generate completed")
         return {
             "topics_feedback": result.topics_feedback,
             "overall_feedback": result.overall_feedback,

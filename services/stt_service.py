@@ -19,8 +19,8 @@ settings = get_settings()
 
 def get_stt_provider() -> tuple[TranscribeFunc, str]:
     """설정에 따라 STT provider와 이름 반환"""
-    if settings.STT_PROVIDER == "runpod":
-        return runpod_transcribe, "runpod"
+    if settings.STT_PROVIDER == "gpu_stt":
+        return runpod_transcribe, "gpu_stt"
     return transcribe, "huggingface"
 
 
@@ -29,7 +29,7 @@ async def process_transcribe(audio_url: str) -> str:
     """음성 파일을 텍스트로 변환 처리"""
     start_time = time.perf_counter()
     file_name = audio_url.split('?')[0].split('/')[-1] if audio_url else "unknown"
-    logger.debug(f"STT 변환 시작 | file={file_name}")
+    logger.debug(f"STT transcribe start | file={file_name}")
 
     # 2. STT 변환 처리
     provider, provider_name = get_stt_provider()
@@ -38,7 +38,7 @@ async def process_transcribe(audio_url: str) -> str:
         text = await provider(audio_url)
 
         if not text or not text.strip():
-            logger.warning(f"STT 결과 비어있음 | file={file_name}")
+            logger.warning(f"STT result is empty | file={file_name}")
             
             record_tool_metrics(
                 tool_name="process_transcribe",
@@ -52,7 +52,7 @@ async def process_transcribe(audio_url: str) -> str:
 
         latency_ms = (time.perf_counter() - start_time) * 1000
 
-        logger.info(f"STT 변환 완료 | file={file_name}")
+        logger.info(f"STT transcribe completed | file={file_name}")
 
         # 메트릭 기록
         record_tool_metrics(
@@ -68,7 +68,7 @@ async def process_transcribe(audio_url: str) -> str:
     except AppException:
         raise
     except Exception as e:
-        logger.error(f"STT 변환 예외 | file={file_name} | {type(e).__name__}: {e}")
+        logger.error(f"STT transcribe error | file={file_name} | {type(e).__name__}: {e}")
         
         record_tool_metrics(
             tool_name="STT_service",

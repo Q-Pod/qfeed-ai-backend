@@ -21,17 +21,12 @@ async def question_router(state: QuestionState) -> dict:
 
     # 세션 시작 시 (히스토리 없음) → 바로 new_topic
     if not state.get("interview_history"):
-        logger.info(
-            "Empty interview history - routing to NEW_TOPIC",
-            extra={
-                "user_id": state.get("user_id"),
-                "session_id": state.get("session_id"),
-            }
-        )
+        logger.info(f"Empty interview history - routing to NEW_TOPIC | session_id: {state.get("session_id")}")
         return {
             "route_decision": RouteDecision.NEW_TOPIC,
-            "route_reasoning": "세션 시작 - 첫 질문 생성 필요",
+            "route_reasoning": "세션 시작 - 첫 질문 생성 필요"
         }
+        
     
     current_topic_count = state.get("current_topic_count", 0)
     current_follow_up_count = state.get("current_follow_up_count", 0)
@@ -41,33 +36,27 @@ async def question_router(state: QuestionState) -> dict:
     # 종료 조건: 최대 토픽 수 + 꼬리질문 최대치 도달
     if current_topic_count >= max_topics and current_follow_up_count >= max_follow_ups:
         logger.info(
-            f"Session complete - topics: {current_topic_count}/{max_topics}, "
-            f"follow-ups: {current_follow_up_count}/{max_follow_ups}",
-            extra={
-                "user_id": state.get("user_id"),
-                "session_id": state.get("session_id"),
-            }
+            f"Session complete - topics: {current_topic_count}/{max_topics} | "
+            f"follow-ups: {current_follow_up_count}/{max_follow_ups } | ",
+            f"session_id : {state.get("session_id")}",
         )
         return {
             "route_decision": RouteDecision.END_SESSION,
-            "route_reasoning": f"최대 토픽 수({max_topics})와 꼬리질문을 모두 완료하여 면접 종료",
+            "route_reasoning": f"최대 토픽 수({max_topics})와 꼬리질문을 모두 완료하여 면접 종료"
         }
     
     # 현재 토픽 꼬리질문 최대치 도달 → new_topic 전환
     if current_follow_up_count >= max_follow_ups:
         if current_topic_count >= max_topics:
             return {
-                "route_decision": RouteDecision.END_SESSION,
-                "route_reasoning": f"최대 토픽 수({max_topics}) 도달로 면접 종료",
-            }
+            "route_decision": RouteDecision.END_SESSION,
+            "route_reasoning": f"최대 토픽 수({max_topics}) 도달로 면접 종료"
+        }
         
         logger.info(
             "Max follow-ups reached - routing to NEW_TOPIC",
-            extra={
-                "user_id": state.get("user_id"),
-                "session_id": state.get("session_id"),
-                "current_follow_up_count": current_follow_up_count,
-            }
+            f"session_id : {state.get("session_id")}"
+            f"current_follow_up_count : {current_follow_up_count}"
         )
         return {
             "route_decision": RouteDecision.NEW_TOPIC,
@@ -79,13 +68,8 @@ async def question_router(state: QuestionState) -> dict:
         router_output = await _invoke_router_llm(state)
         
         logger.info(
-            f"Router decision: {router_output.decision.value}",
-            extra={
-                "user_id": state.get("user_id"),
-                "session_id": state.get("session_id"),
-                "decision": router_output.decision.value,
-                "reasoning": router_output.reasoning,
-            }
+            f"session_id : {state.get("session_id")} | "
+            f"Router decision: {router_output.decision.value}"
         )
         
         return {
@@ -94,14 +78,7 @@ async def question_router(state: QuestionState) -> dict:
         }
         
     except Exception as e:
-        logger.error(
-            f"Router LLM call failed: {e}",
-            extra={
-                "user_id": state.get("user_id"),
-                "session_id": state.get("session_id"),
-                "error": str(e),
-            }
-        )
+        logger.error(f"session_id : {state.get("session_id")} | Router LLM call failed: {e}")
         return _fallback_decision(state)
 
 
@@ -135,7 +112,7 @@ async def _invoke_router_llm(state: QuestionState) -> RouterOutput:
 def _fallback_decision(state: QuestionState) -> dict:
     """LLM 호출 실패 시 fallback"""
     current_follow_up_count = state.get("current_follow_up_count", 0)
-    max_follow_ups = state.get("max_follow_ups_per_topic", 3)
+    max_follow_ups = state.get("max_follow_ups_per_topic", 2)
     
     if current_follow_up_count >= max_follow_ups:
         return {

@@ -1,4 +1,5 @@
 # prompts/rubric.py
+from schemas.feedback import QuestionCategory
 
 """루브릭 평가 프롬프트"""
 
@@ -117,7 +118,7 @@ RUBRIC_SYSTEM_PROMPT = {"gemini" :"""# Role
 """,
 "vllm" : """
 **Role:**
-AI 면접 평가관으로서, 지원자의 답변을 체계적으로 분석하여 다음 평가 루브릭 기준에 따라 객관적이고 구체적인 피드백과 점수를 제공합니다.
+AI 면접 평가관으로서, 지원자의 답변을 체계적으로 분석하여 다음 평가 루브릭 기준에 따라 객관적이고 구체적인 점수를 제공합니다.
 
 **Task:**
 지원자의 답변을 다음 5가지 핵심 평가 지표에 따라 분석하고 평가하십시오. 각 지표별로 상세 평가 기준을 엄격히 적용하여 점수를 부여합니다.
@@ -223,16 +224,29 @@ def get_rubric_system_prompt(provider: str) -> str:
     """Provider에 맞는 시스템 프롬프트 반환"""
     return RUBRIC_SYSTEM_PROMPT.get(provider)
 
+def _format_category(category: QuestionCategory | None) -> str:
+    """카테고리를 문자열로 포맷팅"""
+    if category is None:
+        return "N/A"
+    return category.value if hasattr(category, 'value') else str(category)
+
+def _format_categories(categories: list[QuestionCategory]) -> str:
+    """카테고리 목록을 문자열로 포맷팅"""
+    if not categories:
+        return "N/A"
+    return ", ".join(_format_category(c) for c in categories)
+
 
 def build_rubric_prompt(
     question_type: str,
-    category: str,
+    categories: list[QuestionCategory],
     interview_text: str,
 ) -> str:
     """루브릭 평가용 프롬프트 생성"""
+    categories_str = _format_categories(categories)
     return f"""다음 면접 답변을 루브릭 기준으로 평가해주세요.
 
 [질문 유형]  {question_type} 
-[카테고리] {category}
+[카테고리] {categories_str}
 [면접 history] {interview_text}
 """

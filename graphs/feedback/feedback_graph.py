@@ -37,30 +37,30 @@ def _wrap_node(node_name: str, node_func):
     예상치 못한 예외는 FEEDBACK_GENERATION_FAILED로 변환
     """
     async def async_wrapper(state: FeedbackGraphState) -> dict:
-        logger.info(f"노드 시작 | node={node_name}")
+        logger.info(f"node start | node={node_name}")
         try:
             result = await node_func(state)
-            logger.info(f"노드 완료 | node={node_name}")
+            logger.info(f"node completed | node={node_name}")
             return result
         except AppException:
             # AppException은 그대로 전파 (vLLM 등에서 발생)
-            logger.error(f"노드 실패 | node={node_name}")
+            logger.error(f"node failed | node={node_name}")
             raise
         except Exception as e:
             # 예상치 못한 예외는 래핑
-            logger.error(f"노드 실패 | node={node_name} | {type(e).__name__}: {e}")
+            logger.error(f"node failed | node={node_name} | {type(e).__name__}: {e}")
             raise AppException(ErrorMessage.FEEDBACK_GENERATION_FAILED) from e
     def sync_wrapper(state: FeedbackGraphState) -> dict:
-        logger.info(f"노드 시작 | node={node_name}")
+        logger.info(f"node start | node={node_name}")
         try:
             result = node_func(state)
-            logger.info(f"노드 완료 | node={node_name}")
+            logger.info(f"node completed | node={node_name}")
             return result
         except AppException:
-            logger.error(f"노드 실패 | node={node_name}")
+            logger.error(f"node failed | node={node_name}")
             raise
         except Exception as e:
-            logger.error(f"노드 실패 | node={node_name} | {type(e).__name__}: {e}")
+            logger.error(f"node failed | node={node_name} | {type(e).__name__}: {e}")
             raise AppException(ErrorMessage.FEEDBACK_GENERATION_FAILED) from e
     
     if asyncio.iscoroutinefunction(node_func):
@@ -86,5 +86,5 @@ async def run_feedback_pipeline(initial_state: FeedbackGraphState) -> FeedbackGr
     except AppException:
         raise
     except Exception as e:
-        logger.error(f"파이프라인 실패 | {type(e).__name__}: {e}")
+        logger.error(f"feedback graph failed | {type(e).__name__}: {e}")
         raise AppException(ErrorMessage.FEEDBACK_GENERATION_FAILED) from e

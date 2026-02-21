@@ -72,7 +72,7 @@ async def run_question_pipeline(initial_state: QuestionState) -> dict:
     except AppException:
         raise
     except Exception as e:
-        logger.error(f"파이프라인 실패 | {type(e).__name__}: {e}")
+        logger.error(f"question generate graph failed | {type(e).__name__}: {e}")
         raise AppException(ErrorMessage.FEEDBACK_GENERATION_FAILED) from e
 
 

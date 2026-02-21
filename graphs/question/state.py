@@ -22,7 +22,7 @@ class QuestionState(TypedDict, total=False):
         user_id: 사용자 ID
         session_id: 면접 세션 ID
         question_type: 질문 유형 (CS/SYSTEM_DESIGN/PORTFOLIO)
-        category: 질문 카테고리 (CS일 경우)
+        first_category: 사용자가 고른 첫 질문 카테고리 (CS, SYSTEM DESIGN일 경우)
         interview_history: 면접 Q&A 히스토리
         portfolio: 포트폴리오 정보 (PORTFOLIO 타입일 경우)
         
@@ -88,7 +88,7 @@ def create_initial_state(
     interview_history: list[QATurn] | None = None,
     portfolio: Portfolio | None = None,
     max_topics: int = 3,
-    max_follow_ups_per_topic: int = 3,
+    max_follow_ups_per_topic: int = 2,
 ) -> QuestionState:
     """초기 상태 생성
     

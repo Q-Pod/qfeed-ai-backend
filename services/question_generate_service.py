@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 class QuestionGenerateService:
     """질문 생성 서비스"""
 
-    @traceable(run_type="chain", name="generate_question")
+    @traceable(run_type="chain", name="generate_question_service")
     async def generate_question(
         self, 
         request: QuestionGenerateRequest,
@@ -35,7 +35,7 @@ class QuestionGenerateService:
         if request.interview_history:
             bad_case_result = self._check_bad_case(request)
             if bad_case_result:
-                logger.info(f"Bad case 감지 | type={bad_case_result.bad_case_feedback.type}")
+                logger.info(f"Bad case detected | type={bad_case_result.bad_case_feedback.type}")
                 return QuestionGenerateResponse.from_bad_case(
                     user_id=request.user_id,
                     session_id=request.session_id,
@@ -47,11 +47,10 @@ class QuestionGenerateService:
         result = await self._run_pipeline(request)
 
         # Step 3: 응답 변환
-        logger.debug(f"파이프라인 완료 | route={result.get('route_decision')}")
+        logger.debug(f"question generate service completed | route={result.get('route_decision')}")
         
         return QuestionGenerateResponse.from_graph_result(result)
 
-    @traceable(run_type="tool", name="check_bad_case")
     def _check_bad_case(
         self, 
         request: QuestionGenerateRequest,
@@ -78,7 +77,7 @@ class QuestionGenerateService:
             return None
             
         except Exception as e:
-            logger.error(f"Bad case 체크 실패 | {type(e).__name__}: {e}")
+            logger.error(f"Bad case check failed | {type(e).__name__}: {e}")
             record_tool_metrics(
                 tool_name="bad_case_check",
                 latency_ms=0,
@@ -90,17 +89,17 @@ class QuestionGenerateService:
 
     async def _run_pipeline(self, request: QuestionGenerateRequest) -> dict:
         """그래프 파이프라인 실행"""
-        logger.info("질문 생성 파이프라인 시작")
+        logger.info("question generate graph start")
 
         initial_state = create_initial_state(
             user_id=request.user_id,
             session_id=request.session_id,
             question_type=request.question_type,
-            category=request.category,
+            category=request.initial_catgory,
             interview_history=request.interview_history,
         )
         
         result = await run_question_pipeline(initial_state)
         
-        logger.info("질문 생성 파이프라인 완료")
+        logger.info("question generate graph completed")
         return result

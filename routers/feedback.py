@@ -17,13 +17,13 @@ async def request_feedback(request: FeedbackRequest,):
     update_user_id(str(request.user_id))
     
     logger.info(
-        f"피드백 생성 요청 | questionId={request.question_id}, "
+        f"feedback generate request | questionId={request.question_id}, "
         f"sessionId={request.session_id}, type={request.interview_type.value}"
     )
     service = FeedbackService()
     response = await service.generate_feedback(request)
     
-    logger.info(f"피드백 생성 완료 | success={response.message}")
+    logger.info("feedback generate success")
     
     return response
 

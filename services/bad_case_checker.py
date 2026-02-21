@@ -11,7 +11,7 @@ from langsmith import traceable
 from schemas.feedback import BadCaseResult, BadCaseType
 from providers.embedding.sentence_transformer import get_embedding_provider
 from core.logging import get_logger
-from core.tracing import record_tool_metrics, record_embedding_metrics
+from core.tracing import record_tool_metrics
 
 logger = get_logger(__name__)
 
@@ -44,25 +44,13 @@ class BadCaseChecker:
             return True
         return False
 
-    @traceable(run_type="embedding", name="off_topic_similarity")
     def check_off_topic(self, question: str, answer: str) -> bool:
         """주제 이탈 체크 - 임베딩 사용"""
-        start_time = time.perf_counter()
 
         q_emb, a_emb = self._model.encode([question, answer])
         similarity = cos_sim(q_emb, a_emb).item()
 
-        latency_ms = (time.perf_counter() - start_time) * 1000
         is_off_topic = similarity < self.similarity_threshold
-
-        # 임베딩 메트릭 기록
-        record_embedding_metrics(
-            provider="sentence_transformer",
-            model=self._model.model_name if hasattr(self._model, "model_name") else "unknown",
-            latency_ms=latency_ms,
-            input_count=2,
-            similarity_score=similarity,
-        )
 
         return is_off_topic
 

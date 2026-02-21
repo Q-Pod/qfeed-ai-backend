@@ -33,15 +33,17 @@ async def session_terminator(state: QuestionState) -> dict:
     # 마지막 turn_type
     last_turn_type = "main"
     if interview_history:
-        last_turn_type = interview_history[-1].turn_type
+        last_turn = interview_history[-1]
+        last_turn_type = last_turn.turn_type
+        last_category = last_turn.category
     
     generated_question = GeneratedQuestion(
         user_id = user_id,
         session_id = session_id,
         question_text="수고하셨습니다. 준비된 모든 면접 질문이 종료되었습니다.",
+        category=last_category,  # 마지막 토픽의 카테고리
         topic_id=current_topic_id,
         turn_type=last_turn_type,
-        keywords=[],
         is_session_ended=True,
         end_reason=end_reason,
         is_bad_case=False,

@@ -17,12 +17,12 @@ async def request_feedback(request: QuestionGenerateRequest,):
     update_user_id(str(request.user_id))
     
     logger.info(
-        f"질문 생성 요청 | sessionId={request.session_id}"
+        f"question generate request | sessionId={request.session_id}"
     )
     service = QuestionGenerateService()
     response = await service.generate_question(request)
     
-    logger.info(f"질문 생성 완료 | success={response.message}")
+    logger.info(f"question generate completed | success={response.message}")
     
     return response
 
