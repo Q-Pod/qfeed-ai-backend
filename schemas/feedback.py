@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from enum import Enum
-from typing import Literal
+from typing import Literal, Union
 from schemas.common import BaseResponse
 
 class InterviewType(str, Enum):
@@ -12,13 +12,15 @@ class QuestionType(str, Enum):
     SYSTEM_DESIGN = "SYSTEM_DESIGN"
     PORTFOLIO = "PORTFOLIO"
 
-class QuestionCategory(str, Enum):
+class CSCategory(str, Enum):
     OS = "OS"
     NETWORK = "NETWORK"
     DB = "DB"
     DATA_STRUCTURE_ALGORITHM = "DATA_STRUCTURE_ALGORITHM"
     COMPUTER_ARCHITECTURE = "COMPUTER_ARCHITECTURE"
 
+
+class SystemDesignCategory(str, Enum):
     SOCIAL = "SOCIAL"
     MESSAGING = "MESSAGING"
     NOTIFICATION = "NOTIFICATION"
@@ -27,6 +29,57 @@ class QuestionCategory(str, Enum):
     STORAGE = "STORAGE"
     PLATFORM = "PLATFORM"
     TRANSACTION = "TRANSACTION"
+
+
+# Union 타입 (필요한 곳에서 사용)
+QuestionCategory = Union[CSCategory, SystemDesignCategory]
+
+# 헬퍼 함수
+def get_category_enum(question_type: QuestionType) -> type[CSCategory] | type[SystemDesignCategory] | None:
+    """QuestionType에 해당하는 Category Enum 클래스 반환"""
+    mapping = {
+        QuestionType.CS: CSCategory,
+        QuestionType.SYSTEM_DESIGN: SystemDesignCategory,
+        QuestionType.PORTFOLIO: None,
+    }
+    return mapping.get(question_type)
+
+
+def get_valid_categories(question_type: QuestionType) -> list[str]:
+    """QuestionType에 유효한 카테고리 값 목록 반환"""
+    category_enum = get_category_enum(question_type)
+    if category_enum is None:
+        return []
+    return [c.value for c in category_enum]
+
+def validate_category(question_type: QuestionType, category: QuestionCategory | None) -> bool:
+    """카테고리가 QuestionType에 맞는지 검증"""
+    category_enum = get_category_enum(question_type)
+    
+    # PORTFOLIO는 카테고리 없어야 함
+    if category_enum is None:
+        return category is None
+    
+    # CS/SYSTEM_DESIGN은 해당 Enum 타입이어야 함
+    return isinstance(category, category_enum)
+
+def parse_category(question_type: QuestionType, category_value: str) -> QuestionCategory | None:
+    """문자열을 적절한 Category Enum으로 파싱"""
+    if not category_value:
+        return None
+        
+    category_enum = get_category_enum(question_type)
+    if category_enum is None:
+        return None
+    
+    try:
+        return category_enum(category_value)
+    except ValueError:
+        valid = get_valid_categories(question_type)
+        raise ValueError(
+            f"Invalid category '{category_value}' for {question_type.value}. "
+            f"Valid options: {valid}"
+        )
 
 
 ## BAD CASE 관련 Schema
@@ -99,7 +152,6 @@ class RubricScore(BaseModel):
     '''개별 루브릭 항목 점수'''
     name : str
     score: int = Field(..., description="루브릭 점수 (1-5)")
-    comment: str = Field(..., description="점수 부여 근거")
 
 class RubricEvaluationResult(BaseModel):
     """Rubric Evaluator 내부 출력 - LLM structured output"""
@@ -109,25 +161,19 @@ class RubricEvaluationResult(BaseModel):
     completeness: int = Field(..., ge=1, le=5, description="완성도")
     delivery: int = Field(..., ge=1, le=5, description="전달력")
     
-    # 내부용 근거 (피드백 생성에 활용)
-    accuracy_rationale: str = Field(..., description="정확도 점수 부여 근거 (50-200자)")
-    logic_rationale: str = Field(..., description="논리력 점수 부여 근거 (50-200자)")
-    specificity_rationale: str = Field(..., description="구체성 점수 부여 근거 (50-200자)")
-    completeness_rationale: str = Field(..., description="완성도 점수 부여 근거 (50-200자)")
-    delivery_rationale: str = Field(..., description="전달력 점수 부여 근거 (50-200자)")
-    
     def to_metrics_list(self) -> list[RubricScore]:
         """API 응답용 metrics 리스트로 변환"""
         return [
-            RubricScore(name="정확도", score=self.accuracy, comment=self.accuracy_rationale),
-            RubricScore(name="논리력", score=self.logic, comment=self.logic_rationale),
-            RubricScore(name="구체성", score=self.specificity, comment=self.specificity_rationale),
-            RubricScore(name="완성도", score=self.completeness, comment=self.completeness_rationale),
-            RubricScore(name="전달력", score=self.delivery, comment=self.delivery_rationale),
+            RubricScore(name="정확도", score=self.accuracy),
+            RubricScore(name="논리력", score=self.logic),
+            RubricScore(name="구체성", score=self.specificity),
+            RubricScore(name="완성도", score=self.completeness),
+            RubricScore(name="전달력", score=self.delivery),
         ]
 
 class QATurn(BaseModel):
     question: str = Field(..., description="질문 텍스트")
+    category: QuestionCategory | None = Field(None, description="문제 카테고리")
     answer_text: str = Field(..., description="답변 텍스트")
     turn_type: Literal["new_topic", "follow_up"] = Field(..., description="질문 유형")
     turn_order: int = Field(..., description="전체 세션 내 순서 (0부터)")
@@ -135,7 +181,7 @@ class QATurn(BaseModel):
 
 class FeedbackRequest(BaseModel):
     user_id: int = Field(..., description="사용자 ID")
-    question_id: int = Field(..., description="문제 ID")
+    question_id: int | None = Field(None, description="문제 ID")
     session_id: str | None = Field(None, description="면접 세션 ID")
     interview_type : InterviewType = Field(
         default=InterviewType.PRACTICE_INTERVIEW,
@@ -153,14 +199,14 @@ class TopicFeedback(BaseModel):
     """개별 토픽 피드백"""
     topic_id: int = Field(..., description="토픽 그룹 ID")
     main_question: str = Field(..., description="메인 질문 텍스트")
-    strengths: str = Field(..., description="해당 토픽에서 잘한 점 (150-500자)")
-    improvements: str = Field(..., description="해당 토픽에서 개선할 점 (150-500자)")
+    strengths: str = Field(..., description="해당 토픽에서 잘한 점 (150-800자)")
+    improvements: str = Field(..., description="해당 토픽에서 개선할 점 (150-800자)")
 
 
 class OverallFeedback(BaseModel):
     """종합 피드백"""
-    strengths: str = Field(..., description="전체적으로 잘한 점 (200-800자)")
-    improvements: str = Field(..., description="전체적으로 개선할 점 (200-800자)")
+    strengths: str = Field(..., description="전체적으로 잘한 점 (300-800자)")
+    improvements: str = Field(..., description="전체적으로 개선할 점 (300-800자)")
     
 
 class FeedbackGenerationResult(BaseModel):
@@ -171,7 +217,7 @@ class FeedbackGenerationResult(BaseModel):
 class FeedbackData(BaseModel):
     """피드백 응답 데이터"""
     user_id: int 
-    question_id: int 
+    question_id: int | None = None
     session_id: str | None = None
     
     # Bad case 결과
@@ -209,9 +255,9 @@ class FeedbackResponse(BaseResponse[FeedbackData]):
     def from_evaluation(
         cls,
         user_id: int,
-        question_id: int,
         rubric_result: RubricEvaluationResult,
         overall_feedback: OverallFeedback,
+        question_id: int | None = None,
         keyword_result: KeywordCheckResult | None = None,
         topics_feedback: list[TopicFeedback] | None = None,
         session_id: str | None = None,

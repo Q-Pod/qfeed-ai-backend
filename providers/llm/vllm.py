@@ -28,10 +28,10 @@ class VLLMProvider:
         self,
         base_url: str | None = None,
         model: str | None = None,
-        timeout: float = 180.0,
+        timeout: float = 120.0,
     ):
-        self.base_url = base_url or settings.GPU_BASE_URL
-        self.model = model or settings.VLLM_MODEL_ID  
+        self.base_url = base_url or settings.GPU_LLM_URL
+        self.model = model or settings.LLM_MODEL_ID  
         self.timeout = timeout
 
     @property
@@ -115,15 +115,6 @@ class VLLMProvider:
             temperature=temperature,
             max_tokens=max_tokens,
         )
-
-        # LangSmith 메트릭 기록
-        self._record_metrics(
-            result=result,
-            latency_ms=latency_ms,
-            task=task_name,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
         try:
             parsed_data = json.loads(content)
             result = response_model.model_validate(parsed_data)
@@ -179,6 +170,7 @@ class VLLMProvider:
                     json=payload,
                     headers={"Content-Type": "application/json"},
                 )
+                print(response)
                 response.raise_for_status()
                 result = response.json()
 

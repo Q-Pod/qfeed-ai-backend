@@ -6,7 +6,7 @@ from schemas.common import BaseResponse
 from schemas.feedback import (
     QATurn, 
     QuestionType, 
-    QuestionCategory, 
+    QuestionCategory,
     BadCaseFeedback, 
     BadCaseResult
 )
@@ -51,7 +51,7 @@ class QuestionGenerateRequest(BaseModel):
     user_id: int = Field(..., description="사용자 ID")
     session_id: str = Field(..., description="면접 세션 ID")
     question_type: QuestionType = Field(..., description="질문 유형 (CS/SYSTEM_DESIGN/PORTFOLIO)")
-    category: QuestionCategory | None = Field(None, description="질문 카테고리")
+    initial_catgory: QuestionCategory | None = Field(None, description="사용자가 선택한 초기 질문 카테고리")
     interview_history: list[QATurn] = Field(
         default_factory=list, 
         description="면접 Q&A 히스토리"
@@ -74,6 +74,7 @@ class GeneratedQuestion(BaseModel):
         None, 
         description="질문 텍스트 (세션 종료 시 None)"
     )
+    category: QuestionCategory | None = Field(None, description="문제 카테고리")
     topic_id: int = Field(..., description="토픽 ID")
     turn_type: Literal["main", "follow_up"] = Field(..., description="질문 유형")
     
@@ -170,5 +171,16 @@ class RouterOutput(BaseModel):
 class QuestionOutput(BaseModel):
     """질문 생성 노드 LLM 출력"""
     question_text: str = Field(..., description="생성된 질문")
-    # keywords: list[str] = Field(default_factory=list, description="예상 키워드 (3-5개)")
-    topic_summary: str | None = Field(None, description="토픽 요약 (new_topic일 경우)")
+    category: str | None = Field(None, description="선택한 카테고리 (new_topic일 경우)")
+    cushion_text: str = Field(
+        description="이전 주제를 마무리하고 화제를 전환하거나, 면접의 시작을 알리는 1~2문장의 호응어"
+    )
+
+
+class FollowUpOutput(BaseModel):
+    cushion_text: str = Field(
+        description="지원자의 직전 답변에 대한 공감, 요약, 긍정적 수용, 또는 부드러운 화제 전환을 위한 1~2문장의 호응어"
+    )
+    question_text: str = Field(
+        description="지원자의 역량을 검증하기 위해 던지는 구체적이고 명확한 핵심 꼬리질문 (호응어 제외)"
+    )
