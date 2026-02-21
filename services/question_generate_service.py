@@ -95,7 +95,7 @@ class QuestionGenerateService:
             user_id=request.user_id,
             session_id=request.session_id,
             question_type=request.question_type,
-            category=request.initial_catgory,
+            category=request.initial_category,
             interview_history=request.interview_history,
         )
         

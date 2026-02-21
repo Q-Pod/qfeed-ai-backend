@@ -51,7 +51,7 @@ class QuestionGenerateRequest(BaseModel):
     user_id: int = Field(..., description="사용자 ID")
     session_id: str = Field(..., description="면접 세션 ID")
     question_type: QuestionType = Field(..., description="질문 유형 (CS/SYSTEM_DESIGN/PORTFOLIO)")
-    initial_catgory: QuestionCategory | None = Field(None, description="사용자가 선택한 초기 질문 카테고리")
+    initial_category: QuestionCategory | None = Field(None, description="사용자가 선택한 초기 질문 카테고리")
     interview_history: list[QATurn] = Field(
         default_factory=list, 
         description="면접 Q&A 히스토리"
