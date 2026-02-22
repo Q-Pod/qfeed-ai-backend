@@ -95,7 +95,6 @@ class FeedbackService:
             interview_type=request.interview_type,
             question_type=request.question_type,
             session_id=request.session_id,
-            category=request.category,
             keywords=request.keywords,
         )
         result = await run_feedback_pipeline(initial_state)

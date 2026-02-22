@@ -191,7 +191,6 @@ class FeedbackRequest(BaseModel):
         default=QuestionType.CS,
         description="질문 유형"
     )
-    category: QuestionCategory | None = Field(None, description="문제 카테고리")
     interview_history: list[QATurn]
     keywords: list[str] | None = Field(None, description="필수 키워드 목록")
 
