@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# Python cache
+*.pyc
+__pycache__
+
+# Test
+.pytest_cache
+tests
+
+# Lint
+.ruff_cache
+
+# Environment
+.env
+.env.*
+
+# CI/CD
+.github
+
+# Data
+audio_data
+jupyter
+
+# Old deploy
+deploy-package
+*.tar.gz
+
+# Documentation
+*.md
+
+# Virtual environment
+.venv
+venv
+*.egg-info
+
+# Docker
+Dockerfile
+.dockerignore
+
+# OS
+.DS_Store
