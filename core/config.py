@@ -128,7 +128,7 @@ def get_settings() -> Settings:
     environment = os.getenv("ENVIRONMENT", "local")
 
     # prod, dev 환경에서는 SSM에서 시크릿 로드
-    if environment in ("production", "dev"):
+    if environment in ("prod", "dev"):
         base_path = os.getenv("AWS_PARAMETER_STORE_PATH")
         
         if not base_path:
