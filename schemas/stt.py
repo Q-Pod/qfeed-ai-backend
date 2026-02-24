@@ -20,7 +20,7 @@ class STTRequest(BaseModel):
 
 class STTData(BaseModel):
     user_id : int = Field(..., description="사용자 ID")
-    session_id : int | None = Field(None, description="세션 ID")
+    session_id : str | None = Field(None, description="세션 ID")
     text: str = Field(..., description="변환된 텍스트")
 
 STTResponse = BaseResponse[STTData]
