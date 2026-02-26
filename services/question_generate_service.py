@@ -2,7 +2,7 @@
 
 """질문 생성 서비스"""
 
-from langsmith import traceable
+from langfuse import observe
 
 from schemas.question import (
     QuestionGenerateRequest,
@@ -16,7 +16,7 @@ from graphs.question.state import create_initial_state
 from graphs.question.question_graph import run_question_pipeline
 
 from core.logging import get_logger
-from core.tracing import record_tool_metrics
+from core.tracing import update_trace, update_observation
 
 logger = get_logger(__name__)
 
@@ -24,12 +24,21 @@ logger = get_logger(__name__)
 class QuestionGenerateService:
     """질문 생성 서비스"""
 
-    @traceable(run_type="chain", name="generate_question_service")
+    @observe(name="generate_question_service")
     async def generate_question(
         self, 
         request: QuestionGenerateRequest,
     ) -> QuestionGenerateResponse:
         """질문 생성 메인 로직"""
+
+        update_trace(
+            user_id=str(request.user_id),
+            session_id=request.session_id,
+            metadata={
+                "question_type": request.question_type,
+                "initial_category": request.initial_category.value if request.initial_category else None,
+            },
+        )
 
         # Step 1: Bad case 체크 (히스토리가 있을 때만)
         if request.interview_history:
@@ -51,6 +60,7 @@ class QuestionGenerateService:
         
         return QuestionGenerateResponse.from_graph_result(result)
 
+    @observe(name="check_bad_case", as_type="tool")
     def _check_bad_case(
         self, 
         request: QuestionGenerateRequest,
@@ -58,19 +68,14 @@ class QuestionGenerateService:
         """Bad case 체크, 해당 시 응답 반환"""
         
         if not request.interview_history:
-            record_tool_metrics(
-                tool_name="bad_case_check",
-                latency_ms=0,
-                success=True,
-                skipped=True,
-                reason="no_history",
-            )
+            update_observation(metadata={"skipped": True, "reason": "no_history"})
             return None
 
         try:
             checker = get_bad_case_checker()
             last_turn = request.interview_history[-1]
             result = checker.check(last_turn.question, last_turn.answer_text)
+            update_observation(output={"is_bad_case": result.is_bad_case})
             
             if result.is_bad_case:
                 return result
@@ -78,13 +83,6 @@ class QuestionGenerateService:
             
         except Exception as e:
             logger.error(f"Bad case check failed | {type(e).__name__}: {e}")
-            record_tool_metrics(
-                tool_name="bad_case_check",
-                latency_ms=0,
-                success=False,
-                error=str(e)[:200],
-            )
-            # Bad case 체크 실패해도 질문 생성은 계속 진행
             raise AppException(ErrorMessage.BAD_CASE_CHECK_FAILED) from e
 
     async def _run_pipeline(self, request: QuestionGenerateRequest) -> dict:

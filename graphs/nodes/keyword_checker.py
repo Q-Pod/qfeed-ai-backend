@@ -5,6 +5,9 @@ from graphs.feedback.state import FeedbackGraphState
 from schemas.feedback import KeywordCheckResult
 from providers.embedding.sentence_transformer import get_embedding_provider
 from core.logging import get_logger
+from core.tracing import update_observation
+from langfuse import observe
+
 
 logger = get_logger(__name__)
 
@@ -42,8 +45,8 @@ def _get_sliding_windows(text: str, window_size: int = 30, stride: int = 15) -> 
     
     return windows
 
-
-def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.5) -> dict:
+@observe(name="keyword_checker", as_type="tool")
+async def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.5) -> dict:
     """키워드 커버리지 체크 노드 (슬라이딩 윈도우 방식)"""
     logger.debug(f"keyword checker start | interview_type={state['interview_type']}")
 
@@ -99,6 +102,9 @@ def keyword_checker(state: FeedbackGraphState, similarity_threshold: float = 0.5
     
     coverage = len(covered) / len(state["keywords"])
 
+    update_observation(
+        output={"matched_keywords": covered, "missing_keywords": missing}
+    )
     logger.info(f"keyword check success | covered={len(covered)}/{len(keywords)}, coverage={coverage:.2%}")
     
     return {

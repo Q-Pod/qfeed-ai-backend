@@ -2,17 +2,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from routers import stt,feedback,question, tts
 
+
 from exceptions.handlers import app_exception_handler, global_exception_handler
 from exceptions.exceptions import AppException
 from core.config import get_settings
 from core.logging import setup_logging, RequestLoggingMiddleware, get_logger
+from core.tracing import flush
 from providers.embedding.sentence_transformer import get_embedding_provider
 from services.bad_case_checker import _get_kiwi
 
 settings = get_settings()
-settings.configure_langsmith()
 setup_logging(environment=settings.ENVIRONMENT, log_dir=settings.log_directory)
-
 logger = get_logger(__name__)
 
 @asynccontextmanager
@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI):
     
     logger.info("finish model loading")
     yield
+    flush()
     logger.info("end of app")
 
 app = FastAPI(lifespan=lifespan)

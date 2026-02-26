@@ -1,17 +1,15 @@
 # services/bad_case_checker.py
 import re
-import time
 from functools import lru_cache
 
 from kiwipiepy import Kiwi
 from korcen import korcen
 from sentence_transformers.util import cos_sim
-from langsmith import traceable
 
 from schemas.feedback import BadCaseResult, BadCaseType
 from providers.embedding.sentence_transformer import get_embedding_provider
 from core.logging import get_logger
-from core.tracing import record_tool_metrics
+from langfuse import observe
 
 logger = get_logger(__name__)
 
@@ -72,10 +70,9 @@ class BadCaseChecker:
             return True
         return False
     
-    @traceable(run_type="tool", name="bad_case_check")
+    @observe(name="bad_case_check", as_type="tool")
     def check(self, question: str, answer: str) -> BadCaseResult:
         """단일 Q&A 쌍 체크 - 메인 인터페이스"""
-        start_time = time.perf_counter()
 
         result = None
         checks_performed = []
@@ -98,22 +95,6 @@ class BadCaseChecker:
         else:
             result = BadCaseResult.normal()
             checks_performed = ["inappropriate", "insufficient", "off_topic"]
-
-        latency_ms = (time.perf_counter() - start_time) * 1000
-        
-        # 메트릭 기록
-        record_tool_metrics(
-            tool_name="bad_case_check",
-            latency_ms=latency_ms,
-            success=True,
-            question_length=len(question),
-            answer_length=len(answer),
-            is_bad_case=result.is_bad_case,
-            bad_case_type=result.bad_case_feedback.type if result.is_bad_case else None,
-            checks_performed=checks_performed,
-            min_meaningful_tokens=self.min_meaningful_tokens,
-            similarity_threshold=self.similarity_threshold,
-        )
         
         logger.debug("Bad case 없음")
         return result

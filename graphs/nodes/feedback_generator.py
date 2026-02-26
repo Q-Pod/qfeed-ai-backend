@@ -9,6 +9,7 @@ from prompts.feedback import (
 )
 from core.dependencies import get_llm_provider
 from core.logging import get_logger
+from langfuse import observe
 
 logger = get_logger(__name__)
 
@@ -43,7 +44,7 @@ def group_turns_by_topic(turns: list[QATurn]) -> dict[int, dict]:
         }
     return result
 
-
+@observe(name="feedback_generator", as_type="generation")
 async def feedback_generator(
     state: FeedbackGraphState
 ) -> dict:
@@ -67,12 +68,12 @@ async def feedback_generator(
                 question_type=state["question_type"].value,
                 category=state["category"].value if state["category"] else None,
                 grouped_interview=grouped_interview,
-                rubric_result=state["rubric_result"],
+                # rubric_result=state["rubric_result"],
             ),
             response_model=OverallFeedback,  # 종합만
             system_prompt=system_prompt,
             temperature=0.5,
-            max_tokens=700,
+            max_tokens=1000,
         )
         logger.info("practice mode feedback generate completed")
         return {
@@ -88,12 +89,12 @@ async def feedback_generator(
                 question_type=state["question_type"].value,
                 category=state["category"].value if state["category"] else None,
                 grouped_interview=grouped_interview,
-                rubric_result=state["rubric_result"],
+                # rubric_result=state["rubric_result"],
             ),
             response_model=RealModeFeedback,
             system_prompt=system_prompt,
             temperature=0.5,
-            max_tokens=2000,
+            max_tokens=1000,
         )
         logger.info("real mode feedback generate completed")
         return {

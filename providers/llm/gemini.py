@@ -1,17 +1,16 @@
 # providers/llm/gemini.py
 
 import json
-import time
 from typing import Type, TypeVar
 
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, ValidationError
-from langsmith import traceable
+from langfuse import observe
 
 from core.config import get_settings
-from core.logging import get_logger, get_metrics_logger
-from core.tracing import record_llm_metrics, record_tool_metrics
+from core.logging import get_logger
+from core.tracing import update_observation
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 
@@ -19,7 +18,6 @@ from exceptions.error_messages import ErrorMessage
 T = TypeVar("T", bound=BaseModel)
 settings = get_settings()
 logger = get_logger(__name__)
-metrics_logger = get_metrics_logger()
 
 
 class GeminiProvider:
@@ -40,7 +38,7 @@ class GeminiProvider:
     def provider_name(self) -> str:
         return "gemini"
     
-    @traceable(run_type="llm", name="gemini_generate")
+    @observe(name="gemini_generate", as_type="generation")
     async def generate(
         self,
         prompt: str,
@@ -59,30 +57,20 @@ class GeminiProvider:
             max_output_tokens=max_tokens,
         )
 
-        start_time = time.perf_counter()
         response = await self._call_api(full_prompt, task_name, config)
-        latency_ms = (time.perf_counter() - start_time) * 1000
 
         usage = getattr(response, "usage_metadata", None)
-
-        logger.debug(f"Usage metadata: {usage}")
-        logger.debug(f"prompt_token_count: {getattr(usage, 'prompt_token_count', 'N/A')}")
-        logger.debug(f"candidates_token_count: {getattr(usage, 'candidates_token_count', 'N/A')}")
-
-        # 메트릭 기록
-        usage = getattr(response, "usage_metadata", None)
-        record_llm_metrics(
-            provider="gemini",
+        prompt_tokens = getattr(usage, "prompt_token_count", 0) if usage else 0
+        completion_tokens = getattr(usage, "candidates_token_count", 0) if usage else 0
+        update_observation(
             model=self.model,
-            task=task_name,
-            prompt_tokens=getattr(usage, "prompt_token_count", 0) if usage else 0,
-            completion_tokens=getattr(usage, "candidates_token_count", 0) if usage else 0,
-            latency_ms=latency_ms,
-            temperature=temperature,
-            max_tokens=max_tokens,
+            usage_details={
+                "input_tokens": prompt_tokens,
+                "output_tokens": completion_tokens,
+            },
         )
     
-    @traceable(run_type="llm", name="gemini_generate")
+    @observe(name="gemini_generate_structured", as_type="generation")
     async def generate_structured(
         self,
         prompt: str,
@@ -107,26 +95,17 @@ class GeminiProvider:
             ),
         )
 
-        start_time = time.perf_counter()
         response = await self._call_api(full_prompt, task_name, config)
-        latency_ms = (time.perf_counter() - start_time) * 1000
 
-        # usage 추출 추가
         usage = getattr(response, "usage_metadata", None)
-
-        logger.debug(f"Usage metadata: {usage}")
-        logger.debug(f"prompt_token_count: {getattr(usage, 'prompt_token_count', 'N/A')}")
-        logger.debug(f"candidates_token_count: {getattr(usage, 'candidates_token_count', 'N/A')}")
-        
-        record_llm_metrics(
-            provider="gemini",
+        prompt_tokens = getattr(usage, "prompt_token_count", 0) if usage else 0
+        completion_tokens = getattr(usage, "candidates_token_count", 0) if usage else 0
+        update_observation(
             model=self.model,
-            task=task_name,
-            prompt_tokens=getattr(usage, "prompt_token_count", 0) if usage else 0,
-            completion_tokens=getattr(usage, "candidates_token_count", 0) if usage else 0,
-            latency_ms=latency_ms,
-            temperature=temperature,
-            max_tokens=max_tokens,
+            usage_details={
+                "input_tokens": prompt_tokens,
+                "output_tokens": completion_tokens,
+            },
         )
 
         try:
@@ -135,33 +114,12 @@ class GeminiProvider:
             logger.debug(f"JSON 파싱 성공 | model={task_name}")
             return result
         except json.JSONDecodeError as e:
-            record_tool_metrics(
-                tool_name="json_parse",
-                latency_ms=0,
-                success=False,
-                task=task_name,
-                error=str(e)[:200],
-            )
             logger.error(f"JSON 파싱 실패 | model={task_name} | error={e}")
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
         except ValidationError as e:
-            record_tool_metrics(
-                tool_name="json_parse",
-                latency_ms=0,
-                success=False,
-                task=task_name,
-                error=str(e)[:200],
-            )
             logger.error(f"Pydantic 검증 실패 | model={task_name} | error={e}")
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
         except Exception as e:
-            record_tool_metrics(
-                tool_name="json_parse",
-                latency_ms=0,
-                success=False,
-                task=task_name,
-                error=str(e)[:200],
-            )
             logger.error(f"응답 처리 실패 | model={task_name} | {type(e).__name__}: {e}")
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
         
@@ -173,7 +131,6 @@ class GeminiProvider:
         config: types.GenerateContentConfig,
     ):
         """Gemini API 호출 - 공통 에러 처리"""
-        start_time = time.perf_counter()
         
         logger.debug(f"Gemini API 호출 시작 | task={task} | model={self.model}")
         try:
@@ -183,33 +140,27 @@ class GeminiProvider:
                 config=config,
             )
             logger.debug(f"Gemini response : {response}")
-            
-            elapsed_ms = (time.perf_counter() - start_time) * 1000
-            
-            logger.debug(f"Gemini API 완료 | task={task} | {elapsed_ms:.2f}ms")
+            logger.debug(f"Gemini API 완료 | task={task}")
             
             return response
         
         except TimeoutError as e:
-            elapsed_ms = (time.perf_counter() - start_time) * 1000
-            logger.error(f"Gemini API 타임아웃 | task={task} | {elapsed_ms:.2f}ms")
+            logger.error(f"Gemini API 타임아웃 | task={task} ")
             raise AppException(ErrorMessage.LLM_TIMEOUT) from e
         except ConnectionError as e:
-            elapsed_ms = (time.perf_counter() - start_time) * 1000
-            logger.error(f"Gemini API 연결 실패 | task={task} | {elapsed_ms:.2f}ms")
+            logger.error(f"Gemini API 연결 실패 | task={task}")
             raise AppException(ErrorMessage.LLM_SERVICE_UNAVAILABLE) from e
         except Exception as e:
-            elapsed_ms = (time.perf_counter() - start_time) * 1000
             error_message = str(e).lower()
             
             if "timeout" in error_message:
-                logger.error(f"Gemini API 타임아웃 | task={task} | {elapsed_ms:.2f}ms")
+                logger.error(f"Gemini API 타임아웃 | task={task}")
                 raise AppException(ErrorMessage.LLM_TIMEOUT) from e
             if "connection" in error_message or "unavailable" in error_message:
-                logger.error(f"Gemini API 연결 실패 | task={task} | {elapsed_ms:.2f}ms")
+                logger.error(f"Gemini API 연결 실패 | task={task}")
                 raise AppException(ErrorMessage.LLM_SERVICE_UNAVAILABLE) from e
             
-            logger.error(f"Gemini API 에러 | task={task} | {elapsed_ms:.2f}ms | {type(e).__name__}: {e}")
+            logger.error(f"Gemini API 에러 | task={task} | {type(e).__name__}: {e}")
             raise AppException(ErrorMessage.LLM_SERVICE_UNAVAILABLE) from e
 
     def _build_prompt(

@@ -3,9 +3,11 @@ from schemas.feedback import RubricEvaluationResult
 from prompts.rubric import get_rubric_system_prompt, build_rubric_prompt
 from core.dependencies import get_llm_provider
 from core.logging import get_logger
+from langfuse import observe
 
 logger = get_logger(__name__)
 
+@observe(name="rubric_evaluator", as_type="generation")
 async def rubric_evaluator(state: FeedbackGraphState) -> dict:
     """루브릭 기반 평가 노드"""
     logger.debug(f"rubric evaluator start | interview_type={state['interview_type']}")

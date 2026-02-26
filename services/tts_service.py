@@ -1,15 +1,16 @@
 import time
 import re
 
-from langsmith import traceable
+from langfuse import observe
 
 from providers.tts.eleven_labs import ElevenLabsTTSProvider
 from core.logging import get_logger
+from core.tracing import update_span
 
 logger = get_logger(__name__)
 tts_provider = ElevenLabsTTSProvider()
 
-@traceable(run_type="chain", name="tts_service")
+@observe(name="tts_service")
 async def tts_transcribe(text: str) -> bytes:
     """텍스트를 음성으로 변환"""
 
@@ -21,7 +22,13 @@ async def tts_transcribe(text: str) -> bytes:
     
     elapsed_time = time.time() - start_time
     logger.info(f"TTS 변환 완료 | elapsed={elapsed_time:.2f}s, audio_size={len(audio_data)} bytes")
-    
+
+    update_span(metadata={
+        "provider": "elevenlabs",
+        "text_length": len(processed_text),
+        "audio_size_bytes": len(audio_data),
+    })
+
     return audio_data
 
 

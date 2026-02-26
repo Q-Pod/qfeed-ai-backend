@@ -26,7 +26,7 @@ class Settings(BaseSettings):
         }
         return log_dirs.get(self.ENVIRONMENT, "./logs")
     
-    STT_PROVIDER: str = "huggingface"  #huggingface or "gpu_stt"
+    STT_PROVIDER: str = "gpu_stt"  #huggingface or "gpu_stt"
     LLM_PROVIDER: str = "vllm"  # "gemini" or "vllm"
 
     #v1 : STT
@@ -44,8 +44,9 @@ class Settings(BaseSettings):
     # GPU 서버 URL (외부 주입 - Runpod 등으로 이전 시 환경변수만 변경)
     GPU_STT_URL: str | None = None  
     GPU_LLM_URL: str | None = None   
-    # LLM_MODEL_ID: str = "skt/A.X-4.0-Light"
-    LLM_MODEL_ID: str = "openai/gpt-oss-20b"
+
+    LLM_MODEL_ID: str = "skt/A.X-4.0-Light"
+    # LLM_MODEL_ID: str = "openai/gpt-oss-20b"
 
     # TTS(eleven_labs)
     ELEVENLABS_API_KEY: str
@@ -58,35 +59,11 @@ class Settings(BaseSettings):
         return [v.strip() for v in self.ELEVENLABS_VOICE_IDS.split(",")]
 
 
-    # LangSmith 설정
-    LANGCHAIN_API_KEY: str | None = None
-    LANGCHAIN_PROJECT: str | None = None
-    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
-    LANGCHAIN_TRACING_V2: str = "true"
+    # Langfuse
+    LANGFUSE_PUBLIC_KEY: str
+    LANGFUSE_SECRET_KEY: str
+    LANGFUSE_HOST: str = "https://us.cloud.langfuse.com"
 
-    @property
-    def langchain_project_name(self) -> str:
-        """환경별 LangSmith 프로젝트 이름 반환"""
-        if self.LANGCHAIN_PROJECT:
-            return self.LANGCHAIN_PROJECT
-
-        project_names = {
-            "local": "qfeed-test",
-            "dev": "qfeed-dev",
-            "prod": "qfeed-prod",
-        }
-        return project_names.get(self.ENVIRONMENT, f"qfeed-{self.ENVIRONMENT}")
-
-
-    def configure_langsmith(self, enabled: bool = True):
-        """LangSmith 환경변수 설정"""
-        if self.LANGCHAIN_API_KEY and enabled:
-            os.environ["LANGCHAIN_TRACING_V2"] = self.LANGCHAIN_TRACING_V2
-            os.environ["LANGCHAIN_API_KEY"] = self.LANGCHAIN_API_KEY
-            os.environ["LANGCHAIN_PROJECT"] = self.langchain_project_name
-            os.environ["LANGCHAIN_ENDPOINT"] = self.LANGSMITH_ENDPOINT
-        else:
-            os.environ["LANGCHAIN_TRACING_V2"] = "false"
     
     model_config = {
         "env_file": ".env",
@@ -107,8 +84,9 @@ def _load_ssm_secrets(base_path: str) -> None:
     ssm_keys = {
         "HUGGINGFACE_API_KEY": "huggingface-api-key",
         "GEMINI_API_KEY": "gemini-api-key",
-        "LANGCHAIN_API_KEY": "langchain-api-key",
         "ELEVENLABS_API_KEY": "elevenlabs-api-key",
+        "LANGFUSE_PUBLIC_KEY": "langfuse-public-key",
+        "LANGFUSE_SECRET_KEY": "langfuse-secret-key",
     }
 
     for env_var, key_name in ssm_keys.items():
@@ -117,6 +95,15 @@ def _load_ssm_secrets(base_path: str) -> None:
             value = loader.get_parameter(ssm_path, required=False)
             if value:
                 os.environ[env_var] = value
+
+def _configure_langfuse(settings: Settings) -> None:
+    """Langfuse SDK가 환경변수에서 읽을 수 있도록 설정"""
+    if settings.LANGFUSE_PUBLIC_KEY:
+        os.environ["LANGFUSE_PUBLIC_KEY"] = settings.LANGFUSE_PUBLIC_KEY
+    if settings.LANGFUSE_SECRET_KEY:
+        os.environ["LANGFUSE_SECRET_KEY"] = settings.LANGFUSE_SECRET_KEY
+    if settings.LANGFUSE_HOST:
+        os.environ["LANGFUSE_HOST"] = settings.LANGFUSE_HOST
 
 @lru_cache
 def get_settings() -> Settings:
@@ -141,5 +128,7 @@ def get_settings() -> Settings:
         _load_ssm_secrets(base_path)
 
     settings = Settings()
+    # Langfuse SDK용 환경변수 설정
+    _configure_langfuse(settings)
     print(f"=== ENVIRONMENT: {settings.ENVIRONMENT} ===")
     return settings

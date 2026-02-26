@@ -2,10 +2,10 @@ import httpx
 import secrets
 import time
 from typing import Optional
-from langsmith import traceable
+from langfuse import observe
 from core.config import get_settings
 from core.logging import get_logger
-from core.tracing import record_tts_metrics
+from core.tracing import update_span
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 
@@ -31,7 +31,7 @@ class ElevenLabsTTSProvider:
         """랜덤하게 voice_id 선택"""
         return secrets.choice(self.voice_ids)
 
-    @traceable(run_type="llm", name="elevenlabs_provider")
+    @observe(name="elevenlabs_synthesize")
     async def synthesize(
         self,
         text: str,
@@ -78,16 +78,16 @@ class ElevenLabsTTSProvider:
                 audio_content = response.content
 
                 latency_ms = (time.time() - start_time) * 1000
-                
-                # LangSmith 메트릭 기록
-                record_tts_metrics(
-                    model=self.model_id,
-                    latency_ms=latency_ms,
-                    text_length=len(text),
-                    audio_size_bytes=len(audio_content),
-                    voice_id=selected_voice_id,
-                )
-                
+
+                update_span(metadata={
+                    "model": self.model_id,
+                    "voice_id": selected_voice_id,
+                    "text_length": len(text),
+                    "audio_size_bytes": len(audio_content),
+                    "api_latency_ms": round(latency_ms, 1),
+                    "output_format": output_format,
+                })
+
                 logger.debug(f"ElevenLabs TTS 완료 | voice_id={selected_voice_id}, audio_size={len(response.content)} bytes")
                 return audio_content
                 

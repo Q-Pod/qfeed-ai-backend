@@ -1,142 +1,90 @@
 # core/tracing.py
-from langsmith.run_helpers import get_current_run_tree
+from langfuse import get_client
+from typing import Any
+
+#
+_langfuse = None  # Langfuse 클라이언트 싱글톤 인스턴스
+
+def _get_client():
+    """Langfuse 클라이언트 lazy singleton"""
+    global _langfuse
+    if _langfuse is None:
+        _langfuse = get_client()
+    return _langfuse
 
 
-def record_llm_metrics(
-    *,
-    provider: str,
-    model: str,
-    task: str,
-    prompt_tokens: int,
-    completion_tokens: int,
-    latency_ms: float,
-    temperature: float | None = None,
-    max_tokens: int | None = None,
+def update_trace(
+    user_id: str | None = None,
+    session_id: str | None = None,
+    metadata: dict | None = None,
+    tags: list[str] | None = None,
 ) -> None:
-    """LLM 호출 메트릭 기록"""
-    run_tree = get_current_run_tree()
-    if not run_tree:
-        return
-
-    total_tokens = prompt_tokens + completion_tokens
-    tps = (completion_tokens / (latency_ms / 1000)) if latency_ms > 0 and completion_tokens > 0 else 0
-
-    run_tree.extra["llm_output"] = {
-        "token_usage": {
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "total_tokens": total_tokens,
-        },
-        "model_name": model,
-    }
-
-    run_tree.extra["metadata"] = {
-        "provider": provider,
-        "model": model,
-        "task": task,
-        "latency_ms": round(latency_ms, 2),
-        "tokens_per_second": round(tps, 2),
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
+    """현재 trace 메타데이터 업데이트"""
+    _get_client().update_current_trace(
+        user_id=user_id,
+        session_id=session_id,
+        metadata=metadata,
+        tags=tags,
+    )
 
 
-def record_stt_metrics(
-    *,
-    provider: str,
-    model: str,
-    latency_ms: float,
-    audio_duration_sec: float | None = None,
-    transcribed_text_length: int,
-    language: str = "ko",
+def update_observation(
+    input: Any = None,
+    output: Any = None,
+    metadata: dict | None = None,
+    model: str | None = None,
+    usage_details: dict | None = None,
 ) -> None:
-    """STT 호출 메트릭 기록"""
-    run_tree = get_current_run_tree()
-    if not run_tree:
-        return
+    """현재 observation(span/generation) 업데이트"""
+    kwargs = {}
+    if input is not None:
+        kwargs["input"] = input
+    if output is not None:
+        kwargs["output"] = output
+    if metadata is not None:
+        kwargs["metadata"] = metadata
+    if model is not None:
+        kwargs["model"] = model
+    if usage_details is not None:
+        kwargs["usage_details"] = usage_details
+    
+    _get_client().update_current_generation(**kwargs)  
 
-    metadata = {
-        "provider": provider,
-        "model": model,
-        "language": language,
-        "latency_ms": round(latency_ms, 2),
-        "transcribed_length": transcribed_text_length,
-    }
 
-    if audio_duration_sec:
-        metadata["audio_duration_sec"] = audio_duration_sec
-        metadata["real_time_factor"] = round(latency_ms / 1000 / audio_duration_sec, 2)
-
-    run_tree.extra["metadata"] = metadata
-
-def record_tts_metrics(
-    *,
-    model: str,
-    latency_ms: float,
-    text_length: int,
-    audio_size_bytes: int,
-    voice_id: str,
-    language: str = "ko",
+def update_span(
+    input: Any = None,
+    output: Any = None,
+    metadata: dict | None = None,
 ) -> None:
-    """TTS 호출 메트릭 기록"""
-    run_tree = get_current_run_tree()
-    if not run_tree:
-        return
+    """현재 span observation 업데이트 (STT/TTS 등 비-LLM 파이프라인용)"""
+    kwargs = {}
+    if input is not None:
+        kwargs["input"] = input
+    if output is not None:
+        kwargs["output"] = output
+    if metadata is not None:
+        kwargs["metadata"] = metadata
 
-    # 문자당 처리 시간 (ms/char)
-    ms_per_char = (latency_ms / text_length) if text_length > 0 else 0
-    # 바이트당 처리 시간 추정
-    bytes_per_second = (audio_size_bytes / (latency_ms / 1000)) if latency_ms > 0 else 0
-
-    run_tree.extra["metadata"] = {
-        "model": model,
-        "voice_id": voice_id,
-        "language": language,
-        "latency_ms": round(latency_ms, 2),
-        "text_length": text_length,
-        "audio_size_bytes": audio_size_bytes,
-        "ms_per_char": round(ms_per_char, 2),
-        "bytes_per_second": round(bytes_per_second, 2),
-    }
+    _get_client().update_current_span(**kwargs)
 
 
-def record_embedding_metrics(
-    *,
-    provider: str,
-    model: str,
-    latency_ms: float,
-    input_count: int,
-    similarity_score: float | None = None,
+def add_score(
+    name: str,
+    value: float | int,
+    comment: str | None = None,
 ) -> None:
-    """임베딩 호출 메트릭 기록"""
-    run_tree = get_current_run_tree()
-    if not run_tree:
-        return
-
-    run_tree.extra["metadata"] = {
-        "provider": provider,
-        "model": model,
-        "latency_ms": round(latency_ms, 2),
-        "input_count": input_count,
-        "similarity_score": round(similarity_score, 4) if similarity_score else None,
-    }
+    """현재 trace에 점수 추가"""
+    client = _get_client()
+    trace_id = client.get_current_trace_id()
+    if trace_id:
+        client.score(
+            trace_id=trace_id,
+            name=name,
+            value=value,
+            comment=comment,
+        )
 
 
-def record_tool_metrics(
-    *,
-    tool_name: str,
-    latency_ms: float,
-    success: bool = True,
-    **extra_metadata,
-) -> None:
-    """일반 도구 메트릭 기록"""
-    run_tree = get_current_run_tree()
-    if not run_tree:
-        return
-
-    run_tree.extra["metadata"] = {
-        "tool": tool_name,
-        "latency_ms": round(latency_ms, 2),
-        "success": success,
-        **extra_metadata,
-    }
+def flush() -> None:
+    """남은 이벤트 전송 (shutdown 시 호출)"""
+    _get_client().flush()

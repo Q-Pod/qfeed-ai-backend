@@ -1,7 +1,7 @@
 # graphs/nodes/question_router.py
 
 """라우터 노드 - 분기 결정 (follow_up / new_topic / end_session)"""
-from langsmith import traceable
+from langfuse import observe
 
 from schemas.question import RouteDecision, RouterOutput
 from prompts.question_router import get_router_system_prompt, build_router_prompt
@@ -12,7 +12,7 @@ from core.logging import get_logger
 logger = get_logger(__name__)
 
 
-@traceable(run_type="chain", name="question_router")
+@observe(name="question_router")
 async def question_router(state: QuestionState) -> dict:
     """분기 결정 노드
     
@@ -82,7 +82,7 @@ async def question_router(state: QuestionState) -> dict:
         return _fallback_decision(state)
 
 
-@traceable(run_type="llm", name="router_llm")
+@observe(name="router_llm")
 async def _invoke_router_llm(state: QuestionState) -> RouterOutput:
     """LLM을 호출하여 분기 결정"""
 

@@ -2,6 +2,7 @@
 
 """질문 생성 그래프 정의"""
 from langgraph.graph import StateGraph, END
+from langfuse import observe
 
 from graphs.question.state import QuestionState
 from graphs.nodes.question_router import question_router, get_route_decision
@@ -63,6 +64,7 @@ def get_question_graph() -> StateGraph:
         _question_graph = build_question_graph()
     return _question_graph
 
+@observe(name="question_pipeline")
 async def run_question_pipeline(initial_state: QuestionState) -> dict:
     """질문 생성 파이프라인 실행 """
     graph = get_question_graph()
@@ -75,16 +77,3 @@ async def run_question_pipeline(initial_state: QuestionState) -> dict:
         logger.error(f"question generate graph failed | {type(e).__name__}: {e}")
         raise AppException(ErrorMessage.FEEDBACK_GENERATION_FAILED) from e
 
-
-# async def run_question_pipeline(initial_state: QuestionState) -> dict:
-#     """질문 생성 파이프라인 실행 """
-#     graph = build_question_graph()
-
-#     try: 
-#         result = await graph.ainvoke(initial_state)
-#         return result
-#     except AppException:
-#         raise
-#     except Exception as e:
-#         logger.error(f"파이프라인 실패 | {type(e).__name__}: {e}")
-#         raise AppException(ErrorMessage.FEEDBACK_GENERATION_FAILED) from e

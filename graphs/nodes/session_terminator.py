@@ -2,17 +2,16 @@
 
 """세션 종료 노드"""
 
-from langsmith import traceable
+from langfuse import observe
 
 from schemas.question import GeneratedQuestion
 from graphs.question.state import QuestionState
 from core.logging import get_logger
-from core.tracing import record_tool_metrics
 
 logger = get_logger(__name__)
 
 
-@traceable(run_type="tool", name="session_terminator")
+@observe(name="session_terminator", as_type="tool")
 async def session_terminator(state: QuestionState) -> dict:
     """세션 종료 노드"""
     
@@ -27,8 +26,6 @@ async def session_terminator(state: QuestionState) -> dict:
     
     # 세션 통계
     total_questions = len(interview_history)
-    main_questions = sum(1 for t in interview_history if t.turn_type == "main")
-    follow_up_questions = sum(1 for t in interview_history if t.turn_type == "follow_up")
     
     # 마지막 turn_type
     last_turn_type = "main"
@@ -59,16 +56,6 @@ async def session_terminator(state: QuestionState) -> dict:
             "total_topics": current_topic_count,
             "total_questions": total_questions,
         }
-    )
-    
-    record_tool_metrics(
-        tool_name="session_terminator",
-        latency_ms=0,
-        success=True,
-        total_topics=current_topic_count,
-        total_questions=total_questions,
-        main_questions=main_questions,
-        follow_up_questions=follow_up_questions,
     )
     
     return {

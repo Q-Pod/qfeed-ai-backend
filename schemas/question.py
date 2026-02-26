@@ -171,7 +171,7 @@ class RouterOutput(BaseModel):
 class QuestionOutput(BaseModel):
     """질문 생성 노드 LLM 출력"""
     question_text: str = Field(..., description="생성된 질문")
-    category: str | None = Field(None, description="선택한 카테고리 (new_topic일 경우)")
+    category: str = Field(..., description="선택한 카테고리 (new_topic일 경우)")
     cushion_text: str = Field(
         description="이전 주제를 마무리하고 화제를 전환하거나, 면접의 시작을 알리는 1~2문장의 호응어"
     )

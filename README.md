@@ -36,10 +36,11 @@ LLM_PROVIDER=gemini
 # GPU 서버 (선택)
 GPU_STT_URL=http://localhost:8000
 GPU_LLM_URL=http://localhost:8001
-VLLM_MODEL_ID=LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct
+VLLM_MODEL_ID=
 
-# LangSmith (선택)
-LANGCHAIN_API_KEY=your_key
+LANGFUSE_SECRET_KEY=""
+LANGFUSE_PUBLIC_KEY=""
+LANGFUSE_BASE_URL=""
 ```
 
 ### dev / prod 환경

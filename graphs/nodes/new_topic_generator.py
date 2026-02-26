@@ -2,7 +2,7 @@
 
 """새 토픽 질문 생성 노드"""
 
-from langsmith import traceable
+from langfuse import observe
 
 from schemas.question import QuestionOutput, GeneratedQuestion, QuestionType
 from schemas.feedback import QuestionCategory, parse_category, get_valid_categories
@@ -14,7 +14,7 @@ from core.logging import get_logger
 logger = get_logger(__name__)
 
 
-@traceable(run_type="chain", name="new_topic_generator")
+@observe(name="new_topic_generator")
 async def new_topic_generator(state: QuestionState) -> dict:
     """새 토픽 질문 생성 노드"""
     current_topic_id = state.get("current_topic_id", 0)
@@ -90,7 +90,7 @@ async def new_topic_generator(state: QuestionState) -> dict:
     }
         
 
-@traceable(run_type="llm", name="new_topic_llm")
+@observe(name="new_topic_llm")
 async def _generate_new_topic_llm(state: QuestionState, forced_category: QuestionCategory | None = None, available_categories: list | None = None) -> QuestionOutput:
     """LLM 호출하여 새 토픽 질문 생성"""
     

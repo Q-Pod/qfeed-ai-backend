@@ -2,17 +2,18 @@ import httpx
 import time 
 from pathlib import Path
 
-from langsmith import traceable
+from langfuse import observe
 
 from core.config import get_settings
 from core.logging import get_logger
-from core.tracing import record_stt_metrics, record_tool_metrics
+from core.tracing import update_span
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 
 logger = get_logger(__name__) 
 settings = get_settings()
 
+@observe(name="gpu_stt_download_audio")
 async def download_audio(url: str) -> bytes:
     """오디오 다운로드"""
     start_time = time.perf_counter()
@@ -42,12 +43,12 @@ async def download_audio(url: str) -> bytes:
         raise  # 우리가 던진 건 그대로 전파
     except httpx.TimeoutException:
         logger.error("오디오 다운로드 타임 아웃")
-        record_tool_metrics(
-            tool_name="download_audio",
-            latency_ms=(time.perf_counter() - start_time) * 1000,
-            success=False,
-            error="timeout",
-        )
+        # record_tool_metrics(
+        #     tool_name="download_audio",
+        #     latency_ms=(time.perf_counter() - start_time) * 1000,
+        #     success=False,
+        #     error="timeout",
+        # )
         raise AppException(ErrorMessage.AUDIO_DOWNLOAD_TIMEOUT)
     except httpx.HTTPStatusError as e:
         if e.response.status_code >= 500:
@@ -69,7 +70,7 @@ def get_filename(audio_url: str) -> str:
         audio_url = audio_url.split("?")[0]
     return Path(audio_url).name or "audio.mp4"
 
-@traceable(run_type="tool", name="gpu_stt_call")
+@observe(name="gpu_stt_transcribe")
 async def transcribe(audio_url: str, language: str = "ko") -> str:
     """Presigned URL에서 오디오 다운로드하여 RunPod GPU 인스턴스로 STT 수행"""
     filename = get_filename(audio_url)
@@ -111,15 +112,16 @@ async def transcribe(audio_url: str, language: str = "ko") -> str:
                 f"api_latency={api_elapsed_ms:.0f}ms"
             )
 
-            record_stt_metrics(
-                provider="runpod",
-                model="whisper-large-v3-turbo",
-                download_latency = download_latency,
-                latency_ms=api_elapsed_ms,
-                audio_duration_sec=audio_duration_sec if audio_duration_sec > 0 else None,
-                transcribed_text_length=len(text),
-                language=language,
-            )
+            update_span(metadata={
+                "model": "whisper-large-v3-turbo",
+                "language": language,
+                "audio_size_kb": round(audio_size_kb, 1),
+                "audio_duration_sec": audio_duration_sec if audio_duration_sec > 0 else None,
+                "download_latency_ms": round(download_latency, 1),
+                "api_latency_ms": round(api_elapsed_ms, 1),
+                "server_processing_ms": result.get("processing_time_ms", 0),
+                "transcribed_text_length": len(text),
+            })
 
             return text
 
@@ -127,13 +129,13 @@ async def transcribe(audio_url: str, language: str = "ko") -> str:
         raise
     except httpx.TimeoutException:
         logger.error("stt model call timeout")
-        record_stt_metrics(
-            provider="runpod",
-            model="whisper-large-v3-turbo",
-            latency_ms=(time.perf_counter() - api_start) * 1000,
-            transcribed_text_length=0,
-            language=language,
-        )
+        # record_stt_metrics(
+        #     provider="runpod",
+        #     model="whisper-large-v3-turbo",
+        #     latency_ms=(time.perf_counter() - api_start) * 1000,
+        #     transcribed_text_length=0,
+        #     language=language,
+        # )
         raise AppException(ErrorMessage.STT_TIMEOUT)
     except httpx.HTTPStatusError as e:
         logger.error(

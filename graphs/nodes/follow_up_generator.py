@@ -1,5 +1,5 @@
 # graphs/nodes/follow_up_generator.py
-from langsmith import traceable
+from langfuse import observe
 
 from schemas.question import GeneratedQuestion, FollowUpOutput
 from prompts.follow_up import get_follow_up_system_prompt, build_follow_up_prompt
@@ -10,7 +10,7 @@ from core.logging import get_logger
 logger = get_logger(__name__)
 
 
-@traceable(run_type="chain", name="follow_up_generator")
+@observe(name="follow_up_generator")
 async def follow_up_generator(state: QuestionState) -> dict:
     """꼬리질문 생성 노드"""
     
@@ -65,7 +65,7 @@ async def follow_up_generator(state: QuestionState) -> dict:
     }
 
 
-@traceable(run_type="llm", name="follow_up_llm")
+@observe(name="follow_up_llm")
 async def _generate_follow_up_llm(
     state: QuestionState,
     topic_turns: list,
