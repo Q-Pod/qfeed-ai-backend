@@ -1,11 +1,11 @@
 # graphs/nodes/feedback_generator.py
 from collections import defaultdict
 from graphs.feedback.state import FeedbackGraphState, QATurn
-from schemas.feedback import OverallFeedback,FeedbackGenerationResult
+from schemas.feedback import OverallFeedback, RealModeFeedback, InterviewType
 from prompts.feedback import (
     get_feedback_system_prompt,
-    build_multi_topic_feedback_prompt,
-    build_single_topic_feedback_prompt
+    build_real_mode_feedback_prompt,
+    build_practice_mode_feedback_prompt
 )
 from core.dependencies import get_llm_provider
 from core.logging import get_logger
@@ -53,19 +53,17 @@ async def feedback_generator(
     llm = get_llm_provider()
 
     grouped_interview = group_turns_by_topic(state["interview_history"])
-
-    is_single_topic = len(grouped_interview) == 1
     
     system_prompt = get_feedback_system_prompt(
         llm.provider_name,
-        is_single_topic=is_single_topic
+        state["interview_type"]
     )
     
-    if is_single_topic:
+    if state["interview_type"] == InterviewType.PRACTICE_INTERVIEW:
         # 단일 토픽: 종합 피드백만 생성
-        logger.debug("single topic feedback generate")
+        logger.debug("| single topic feedback generate start")
         result = await llm.generate_structured(
-            prompt=build_single_topic_feedback_prompt(
+            prompt=build_practice_mode_feedback_prompt(
                 question_type=state["question_type"].value,
                 category=state["category"].value if state["category"] else None,
                 grouped_interview=grouped_interview,
@@ -74,30 +72,30 @@ async def feedback_generator(
             response_model=OverallFeedback,  # 종합만
             system_prompt=system_prompt,
             temperature=0.5,
-            max_tokens=500,
+            max_tokens=700,
         )
-        logger.info("feedback generate completed")
+        logger.info("practice mode feedback generate completed")
         return {
-            "topics_feedback": None,
+            "topics_feedback" : None,
             "overall_feedback": result,
             "current_step": "feedback_generator",
         }
     else:
-        # 멀티 토픽: 토픽별 + 종합 피드백
-        logger.debug(f"multi feedback generate completed | topics={len(grouped_interview)}")
+        # 실전모드 : 토픽별 피드백 + 종합 피드백
+        logger.debug(f" | multi feedback generate start | topics={len(grouped_interview)}")
         result = await llm.generate_structured(
-            prompt=build_multi_topic_feedback_prompt(
+            prompt=build_real_mode_feedback_prompt(
                 question_type=state["question_type"].value,
                 category=state["category"].value if state["category"] else None,
                 grouped_interview=grouped_interview,
                 rubric_result=state["rubric_result"],
             ),
-            response_model=FeedbackGenerationResult,
+            response_model=RealModeFeedback,
             system_prompt=system_prompt,
             temperature=0.5,
-            max_tokens=1500,
+            max_tokens=2000,
         )
-        logger.info("feedback generate completed")
+        logger.info("real mode feedback generate completed")
         return {
             "topics_feedback": result.topics_feedback,
             "overall_feedback": result.overall_feedback,

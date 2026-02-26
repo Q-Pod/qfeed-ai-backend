@@ -44,7 +44,8 @@ class Settings(BaseSettings):
     # GPU 서버 URL (외부 주입 - Runpod 등으로 이전 시 환경변수만 변경)
     GPU_STT_URL: str | None = None  
     GPU_LLM_URL: str | None = None   
-    LLM_MODEL_ID: str = "skt/A.X-4.0-Light"
+    # LLM_MODEL_ID: str = "skt/A.X-4.0-Light"
+    LLM_MODEL_ID: str = "openai/gpt-oss-20b"
 
     # TTS(eleven_labs)
     ELEVENLABS_API_KEY: str

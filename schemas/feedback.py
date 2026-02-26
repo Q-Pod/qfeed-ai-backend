@@ -203,16 +203,15 @@ class TopicFeedback(BaseModel):
 
 
 class OverallFeedback(BaseModel):
-    """종합 피드백"""
+    """종합 피드백 : 연습모드는 종합 피드백만 Required"""
     strengths: str = Field(..., description="전체적으로 잘한 점 (300-800자)")
     improvements: str = Field(..., description="전체적으로 개선할 점 (300-800자)")
-    
 
-class FeedbackGenerationResult(BaseModel):
-    """피드백 생성 LLM 출력 스키마"""
-    topics_feedback: list[TopicFeedback] = Field(None, description="토픽별 피드백(토픽이 두개 이상일때만)")
-    overall_feedback: OverallFeedback = Field(..., description="종합 피드백")
-
+class RealModeFeedback(BaseModel):
+    """실전모드: 토픽별 + 종합 모두 Required"""
+    topics_feedback: list[TopicFeedback]
+    overall_feedback: OverallFeedback
+     
 class FeedbackData(BaseModel):
     """피드백 응답 데이터"""
     user_id: int 

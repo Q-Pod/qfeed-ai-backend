@@ -170,9 +170,9 @@ class VLLMProvider:
                     json=payload,
                     headers={"Content-Type": "application/json"},
                 )
-                print(response)
                 response.raise_for_status()
                 result = response.json()
+                logger.debug(f"vLLM raw response | task={task} | response={result}")
 
             elapsed_ms = (time.perf_counter() - start_time) * 1000
 
