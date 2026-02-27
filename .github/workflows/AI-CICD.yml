@@ -14,7 +14,6 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: qfeed-ecr-ai
-  DEPLOY_RAW_BASE: https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/dev/ai
 
 jobs:
   ci:
@@ -174,7 +173,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets '[{"Key":"tag:Name","Values":["qfeed-dev-ec2-ai"]}]' \
-            --parameters '{"commands":["mkdir -p /srv/qfeed && curl -sfL ${{ env.DEPLOY_RAW_BASE }}/deploy.sh -o /srv/qfeed/deploy.sh && cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"],"executionTimeout":["600"]}' \
+            --parameters '{"commands":["mkdir -p /srv/qfeed && curl -sfL https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/dev/ai/deploy.sh -o /srv/qfeed/deploy.sh && cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"],"executionTimeout":["600"]}' \
             --timeout-seconds 600 \
             --comment "Deploy AI ${{ steps.meta.outputs.short_sha }}" \
             --output text --query "Command.CommandId")
@@ -224,62 +223,86 @@ jobs:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
 
-      - name: 패키지 버전 추출
-        id: package-version
-        run: |
-          VERSION=$(python -c "
-          import tomllib
-          with open('pyproject.toml', 'rb') as f:
-              data = tomllib.load(f)
-          print(data['project']['version'])
-          ")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: 빌드 산출물 다운로드
-        uses: actions/download-artifact@v4
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: ai-v${{ steps.package-version.outputs.version }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/qfeed-prod-role-github-actions
+          aws-region: ${{ env.AWS_REGION }}
 
-      # 서버로 산출물을 전송한 뒤, 서버 내부 deploy-ai.sh로 교체/백업 처리
-      - name: SSH 키 설정
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.QFEED_EC2_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.QFEED_EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: 서버 연결 테스트
+      - name: Check if image exists
+        id: check
         run: |
-          ssh -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=30 \
-            -o ServerAliveInterval=10 \
-            ${{ secrets.QFEED_EC2_USER }}@${{ secrets.QFEED_EC2_HOST }} \
-            "echo 'Connection successful'"
+          aws ecr describe-images \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-ids imageTag=${{ steps.meta.outputs.short_sha }} \
+            > /dev/null 2>&1 && echo "exists=true" >> "$GITHUB_OUTPUT" || echo "exists=false" >> "$GITHUB_OUTPUT"
 
-      - name: 서버로 파일 업로드 (SCP)
-        timeout-minutes: 5
-        run: |
-          scp -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=60 \
-            -o ServerAliveInterval=10 \
-            -o ServerAliveCountMax=3 \
-            ai-${{ steps.package-version.outputs.version }}.tar.gz \
-            ${{ secrets.QFEED_EC2_USER }}@${{ secrets.QFEED_EC2_HOST }}:/tmp/
+      - uses: docker/setup-buildx-action@v3
+        if: steps.check.outputs.exists == 'false'
 
-      - name: 서버에서 배포 실행 (deploy-ai.sh)
-        timeout-minutes: 5
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Build and push
+        if: steps.check.outputs.exists == 'false'
+        uses: docker/build-push-action@v6
         with:
-          host: ${{ secrets.QFEED_EC2_HOST }}
-          username: ${{ secrets.QFEED_EC2_USER }}
-          key: ${{ secrets.QFEED_EC2_SSH_KEY }}
-          timeout: 60s
-          command_timeout: 5m
-          script: |
-            set -e
-            sudo /srv/qfeed/deploy-ai.sh /tmp/ai-${{ steps.package-version.outputs.version }}.tar.gz
+          context: .
+          push: true
+          platforms: linux/arm64
+          tags: ${{ steps.meta.outputs.image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy via SSM
+        id: ssm-deploy
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets '[{"Key":"tag:Name","Values":["qfeed-prod-ec2-ai"]}]' \
+            --parameters '{"commands":["mkdir -p /srv/qfeed && curl -sfL https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/prod/ai/deploy.sh -o /srv/qfeed/deploy.sh && cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"],"executionTimeout":["600"]}' \
+            --timeout-seconds 600 \
+            --comment "Deploy AI ${{ steps.meta.outputs.short_sha }}" \
+            --output text --query "Command.CommandId")
+          echo "command_id=${COMMAND_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for deployment
+        run: |
+          for i in $(seq 1 60); do
+            sleep 10
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+              --query "CommandInvocations[0].Status" --output text 2>/dev/null || echo "Pending")
+            echo "  Status: ${STATUS} (${i}0s)"
+            if [ "$STATUS" = "Success" ]; then echo "Deploy OK"; exit 0; fi
+            if [ "$STATUS" = "Failed" ] || [ "$STATUS" = "TimedOut" ]; then
+              echo "Deploy failed: ${STATUS}"
+              INSTANCE_ID=$(aws ssm list-command-invocations \
+                --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+                --query "CommandInvocations[0].InstanceId" --output text)
+              aws ssm get-command-invocation \
+                --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+                --instance-id "$INSTANCE_ID" \
+                --query "[StandardOutputContent,StandardErrorContent]" --output text || true
+              exit 1
+            fi
+          done
+          echo "Timed out"; exit 1
+
+      - name: Discord 알림 (Prod 배포 성공)
+        if: success()
+        continue-on-error: true
+        run: |
+          curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"✅ AI Prod 배포 완료\",\"description\":\"이미지 \`${{ steps.meta.outputs.short_sha }}\` 배포 성공\",\"color\":3066993}]}"
 
   discord-ci-failure:
     name: Discord 알림 (CI 실패)
