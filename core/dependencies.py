@@ -1,6 +1,6 @@
 # core/dependencies.py
-from functools import lru_cache
 from core.config import get_settings
+from providers.llm.base import LLMProvider
 from providers.llm.vllm import VLLMProvider
 from providers.llm.gemini import GeminiProvider
 
@@ -9,11 +9,16 @@ from providers.llm.gemini import GeminiProvider
 # from providers.stt.huggingface import HuggingFaceSTTProvider
 settings = get_settings()
 
-@lru_cache
-def get_llm_provider() -> VLLMProvider:
-    if settings.LLM_PROVIDER == "vllm":
-        return VLLMProvider()
-    return GeminiProvider()
+_provider_cache: dict[str, LLMProvider] = {}
+
+def get_llm_provider(provider: str | None = None) -> LLMProvider:
+    provider_name = provider or settings.LLM_PROVIDER
+    if provider_name not in _provider_cache:
+        if provider_name == "vllm":
+            _provider_cache[provider_name] = VLLMProvider()
+        else:
+            _provider_cache[provider_name] = GeminiProvider()
+    return _provider_cache[provider_name]
 
 
 # @lru_cache  

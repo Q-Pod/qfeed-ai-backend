@@ -28,7 +28,7 @@ class GeminiProvider:
         self,
         api_key: str | None = None,
         model: str | None = None,
-        thinking_budget: int = 0
+        thinking_budget: int = 1024
     ):
         self.client = genai.Client(api_key=api_key or settings.GEMINI_API_KEY)
         self.model = model or settings.GEMINI_MODEL_ID
@@ -85,6 +85,7 @@ class GeminiProvider:
         schema = response_model.model_json_schema()
         task_name = response_model.__name__
 
+        # thinking 모델 사용 시
         config = types.GenerateContentConfig(
             temperature=temperature,
             max_output_tokens=max_tokens,
@@ -94,6 +95,17 @@ class GeminiProvider:
                 thinking_budget=self.thinking_budget  # 0이면 thinking 비활성화
             ),
         )
+
+        # 일반 flash 모델 사용 시
+        # config = types.GenerateContentConfig(
+        #     temperature=temperature,
+        #     max_output_tokens=max_tokens,
+        #     response_mime_type="application/json",
+        #     response_schema=schema,
+        #     thinking_config=types.ThinkingConfig(
+        #         thinking_budget=self.thinking_budget  # 0이면 thinking 비활성화
+        #     ),
+        # )
 
         response = await self._call_api(full_prompt, task_name, config)
 
