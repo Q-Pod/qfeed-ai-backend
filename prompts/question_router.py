@@ -24,10 +24,12 @@ ROUTER_SYSTEM_PROMPT = {
 - 지원자가 해당 개념을 이미 완벽하고 깊이 있게 설명하여 더 이상의 질문이 무의미한 경우
 - 지원자가 해당 주제에 대해 전혀 모르거나 엉뚱한 대답을 하여, 계속 파고드는 것이 시간 낭비인 경우
 - 세션의 첫 시작이어서 새로운 질문을 던져야 하는 경우
+- **주의: 마지막 토픽(최대 토픽 수에 도달)인 경우 new_topic을 선택할 수 없습니다. follow_up 또는 end_session 중에서 선택하세요.**
 
 3. end_session 선택 조건
 - 참고: 물리적인 종료 조건은 시스템에서 처리합니다 
 - 지원자가 모든 주요 기술 영역에 대해 자신의 역량을 명확히 증명했으며, 더 이상 평가할 영역이 남지 않은 예외적인 경우에만 선택하세요.
+- 마지막 토픽에서 꼬리질문까지 모두 완료하여 더 이상 질문할 내용이 없는 경우
 """,
     "vllm": """당신은 기술 면접 진행자입니다. 현재 면접 상황과 지원자의 마지막 답변 수준을 분석하여 다음 행동을 결정하세요.
 
@@ -48,10 +50,12 @@ ROUTER_SYSTEM_PROMPT = {
 - 지원자가 해당 개념을 이미 완벽하고 깊이 있게 설명하여 더 이상의 질문이 무의미한 경우
 - 지원자가 해당 주제에 대해 전혀 모르거나 엉뚱한 대답을 하여, 계속 파고드는 것이 시간 낭비인 경우
 - 세션의 첫 시작이어서 새로운 질문을 던져야 하는 경우
+- **주의: 마지막 토픽(최대 토픽 수에 도달)인 경우 new_topic을 선택할 수 없습니다. follow_up 또는 end_session 중에서 선택하세요.**
 
 3. end_session 선택 조건
 - 참고: 물리적인 종료 조건은 시스템에서 처리합니다 
-- 지원자가 모든 주요 기술 영역에 대해 자신의 역량을 명확히 증명했으며, 더 이상 평가할 영역이 남지 않은 예외적인 경우에만 선택하세요."""
+- 지원자가 모든 주요 기술 영역에 대해 자신의 역량을 명확히 증명했으며, 더 이상 평가할 영역이 남지 않은 예외적인 경우에만 선택하세요.
+- 마지막 토픽에서 꼬리질문까지 모두 완료하여 더 이상 질문할 내용이 없는 경우"""
 }
 
 
@@ -79,6 +83,16 @@ def build_router_prompt(
     
     history_text = _format_interview_history(interview_history)
     
+    is_last_topic = current_topic_count >= max_topics
+    remaining_follow_ups = max_follow_ups_per_topic - current_follow_up_count
+    
+    instruction = (
+        "현재 마지막 토픽입니다. `new_topic`은 선택할 수 없습니다. "
+        f"남은 꼬리질문 횟수({remaining_follow_ups}회)를 고려하여 `follow_up` 또는 `end_session` 중 선택하세요."
+        if is_last_topic
+        else "위 상황을 분석하여 다음 행동을 결정하세요."
+    )
+
     return f"""\
 ## 면접 설정
 - 질문 유형: {question_type}
@@ -87,14 +101,15 @@ def build_router_prompt(
 - 토픽당 최대 꼬리질문 수: {max_follow_ups_per_topic}
 
 ## 현재 상태
-- 진행된 토픽 수: {current_topic_count}
-- 현재 토픽 꼬리질문 수: {current_follow_up_count}
+- 진행된 토픽 수: {current_topic_count}/{max_topics}
+- 현재 토픽 꼬리질문 수: {current_follow_up_count}/{max_follow_ups_per_topic}
+- 마지막 토픽 여부: {"예" if is_last_topic else "아니오"}
 
 ## 면접 히스토리
 {history_text}
 
 ## 지시사항
-위 상황을 분석하여 다음 행동을 결정하세요.
+{instruction}
 """
 
 

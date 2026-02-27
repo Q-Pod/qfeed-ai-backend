@@ -44,8 +44,8 @@ async def download_audio(url: str) -> bytes:
             audio_data = response.content
 
             audio_size_kb = len(audio_data) / 1024
-
             logger.info(f"size={audio_size_kb:.1f}KB")
+            
             return audio_data
             
     except AppException:
