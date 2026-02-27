@@ -15,10 +15,21 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY . .
 
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-USER appuser
-
+# HuggingFace 캐시 디렉터리를 쓰기 가능한 경로로 지정
+ENV HF_HOME=/app/.cache/huggingface
+ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
+ENV SENTENCE_TRANSFORMERS_HOME=/app/.cache/sentence_transformers
 ENV PATH="/app/.venv/bin:$PATH"
+
+# 캐시 디렉터리 미리 생성
+RUN mkdir -p /app/.cache/huggingface /app/.cache/sentence_transformers
+
+# appuser 홈을 /app으로 지정 (/nonexistent 방지)
+RUN addgroup --system appgroup \
+    && adduser --system --ingroup appgroup --home /app appuser \
+    && chown -R appuser:appgroup /app
+
+USER appuser
 
 EXPOSE 8000
 
