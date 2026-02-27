@@ -76,7 +76,7 @@ class GeneratedQuestion(BaseModel):
     )
     category: QuestionCategory | None = Field(None, description="문제 카테고리")
     topic_id: int = Field(..., description="토픽 ID")
-    turn_type: Literal["main", "follow_up"] = Field(..., description="질문 유형")
+    turn_type: Literal["new_topic", "follow_up"] = Field(..., description="질문 유형")
     
     # 세션 종료 플래그
     is_session_ended: bool = Field(

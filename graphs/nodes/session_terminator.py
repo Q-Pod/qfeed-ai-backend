@@ -28,7 +28,7 @@ async def session_terminator(state: QuestionState) -> dict:
     total_questions = len(interview_history)
     
     # 마지막 turn_type
-    last_turn_type = "main"
+    last_turn_type = "new_topic"
     if interview_history:
         last_turn = interview_history[-1]
         last_turn_type = last_turn.turn_type
