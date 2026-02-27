@@ -123,6 +123,13 @@ uv run pytest tests/e2e
 uv run pytest tests/unit/services/test_feedback_service.py -v
 ```
 
+## Code Quality
+
+```bash
+uv run ruff check .
+uv run ruff format --check .
+```
+
 ---
 
 ## 6. 프로젝트 구조

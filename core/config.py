@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     # gemini
     GEMINI_API_KEY: str
-    GEMINI_MODEL_ID: str = "gemini-2.5-flash"
+    GEMINI_MODEL_ID: str = "gemini-2.5-pro"
 
     # Callback 설정 (V2)
     feedback_callback_url: str = "http://backend-server/ai/interview/feedback/callback"
