@@ -87,6 +87,7 @@ def _load_ssm_secrets(base_path: str) -> None:
         "ELEVENLABS_API_KEY": "elevenlabs-api-key",
         "LANGFUSE_PUBLIC_KEY": "langfuse-public-key",
         "LANGFUSE_SECRET_KEY": "langfuse-secret-key",
+        "LANGFUSE_BASE_URL": "langfuse-base-url",
     }
 
     for env_var, key_name in ssm_keys.items():
