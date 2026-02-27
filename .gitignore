@@ -27,3 +27,6 @@ audio_data/
 
 # jupyter
 jupyter/
+
+# OS
+.DS_Store

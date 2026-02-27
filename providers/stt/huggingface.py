@@ -2,18 +2,19 @@ import httpx
 import time
 from pathlib import Path
 
+from langfuse import observe
+
 from core.config import get_settings
-from core.logging import get_logger, get_metrics_logger, log_execution_time
+from core.logging import get_logger
+from core.tracing import update_span
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 
-logger = get_logger(__name__)
-metrics_logger = get_metrics_logger()   
+logger = get_logger(__name__)   
 settings = get_settings()
 
 # MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 API_URL = "https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3-turbo"
-# API_URL = "https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3"
 headers = {
     "Authorization": f"Bearer {settings.HUGGINGFACE_API_KEY}",
 }
@@ -24,7 +25,7 @@ CONTENT_TYPE_MAP = {
     ".m4a": "audio/x-m4a",
 }
 
-@log_execution_time(logger)
+@observe(name="hf_download_audio")
 async def download_audio(url: str) -> bytes:
     """오디오 다운로드"""
     logger.debug("오디오 다운로드 시작")
@@ -41,8 +42,10 @@ async def download_audio(url: str) -> bytes:
             
             response.raise_for_status()
             audio_data = response.content
+
+            audio_size_kb = len(audio_data) / 1024
+            logger.info(f"size={audio_size_kb:.1f}KB")
             
-            logger.info(f"size={len(audio_data) / 1024:.1f}KB")
             return audio_data
             
     except AppException:
@@ -73,12 +76,11 @@ def get_content_type(audio_url: str) -> str:
     ext = Path(audio_url).suffix.lower()
     return CONTENT_TYPE_MAP[ext]
 
-@log_execution_time(logger)
+@observe(name="huggingface_stt_transcribe")
 async def transcribe(audio_url: str) -> str:
     """Presigned URL에서 오디오 다운로드하여 STT 수행"""
     content_type = get_content_type(audio_url)
     audio_data = await download_audio(audio_url)
-    audio_size_kb = len(audio_data) / 1024
 
     logger.debug("Huggingface API 호출 시작 | model=whisper-large-v3-turbo | content_type={content_type} | audio_size={audio_size_kb:.1f}KB")
     api_start = time.perf_counter()
@@ -96,14 +98,15 @@ async def transcribe(audio_url: str) -> str:
             
             api_elapsed_ms = (time.perf_counter() - api_start) * 1000
             logger.info(f"Huggingface API 완료(순수 STT 시간) | {api_elapsed_ms:.2f}ms")
-            
-            # 메트릭 로깅 (성공 시에만)
-            metrics_logger.info(
-                f"STT_METRIC | provider=huggingface | model=whisper-large-v3-turbo | "
-                f"audio_size_kb={audio_size_kb:.1f} | api_latency_ms={api_elapsed_ms:.2f} | "
-                f"text_length={len(text)}"
-            )
-            
+
+            update_span(metadata={
+                "model": "whisper-large-v3-turbo",
+                "audio_size_kb": round(len(audio_data) / 1024, 1),
+                "content_type": content_type,
+                "api_latency_ms": round(api_elapsed_ms, 1),
+                "transcribed_text_length": len(text),
+            })
+
             return text
     except httpx.TimeoutException:
         logger.error("Huggingface API 타임아웃 ")

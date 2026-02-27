@@ -1,0 +1,379 @@
+name: AI CI/CD
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: qfeed-ecr-ai
+
+jobs:
+  ci:
+    name: CI - Lint and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Ruff 린트 검사
+      - name: Lint code with Ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check ."
+
+      # Python 3.12 설정
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # uv 설치
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      # 의존성 설치
+      - name: Install dependencies
+        run: uv sync
+
+      # .env 파일 생성
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          HUGGINGFACE_API_KEY=${{ secrets.HUGGINGFACE_API_KEY }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          EOF
+
+      # # 테스트 실행
+      # - name: Run test
+      #   run: uv run pytest
+
+      # pyproject.toml 버전 추출
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(python -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+          print(data['project']['version'])
+          ")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # 배포 아티팩트 생성 (prod deploy에서 사용)
+      - name: Package artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir deploy-package
+          rsync -av \
+            --exclude='.git*' \
+            --exclude='tests/' \
+            --exclude='*.pyc' \
+            --exclude='__pycache__/' \
+            --exclude='.github/' \
+            --exclude='.env*' \
+            --exclude='.ruff_cache/' \
+            --exclude='deploy-package/' \
+            ./ deploy-package/
+          tar -czf ai-${{ steps.version.outputs.version }}.tar.gz -C deploy-package .
+
+      # 아티팩트 업로드 (prod deploy에서 사용)
+      - name: Upload artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-v${{ steps.version.outputs.version }}
+          path: ai-${{ steps.version.outputs.version }}.tar.gz
+          retention-days: 3
+
+      # CI 통과 시 Discord 알림
+      - name: Discord 알림 (CI 통과)
+        if: success()
+        continue-on-error: true
+        run: |
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "✅ AI CI 통과",
+              "description": "린트 검사·의존성 설치까지 완료되었습니다.",
+              "color": 3066993,
+              "fields": [
+                {"name": "브랜치", "value": "${{ github.ref_name }}", "inline": true},
+                {"name": "커밋", "value": "\`${{ github.sha }}\`", "inline": true},
+                {"name": "트리거", "value": "${{ github.event_name }}", "inline": true}
+              ],
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
+          curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
+
+  deploy-dev:
+    name: Deploy to Dev
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/qfeed-dev-role-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if image exists
+        id: check
+        run: |
+          aws ecr describe-images \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-ids imageTag=${{ steps.meta.outputs.short_sha }} \
+            > /dev/null 2>&1 && echo "exists=true" >> "$GITHUB_OUTPUT" || echo "exists=false" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.check.outputs.exists == 'false'
+
+      - name: Build and push
+        if: steps.check.outputs.exists == 'false'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          tags: ${{ steps.meta.outputs.image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy via SSM
+        id: ssm-deploy
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets '[{"Key":"tag:Name","Values":["qfeed-dev-ec2-ai"]}]' \
+            --parameters '{"commands":["mkdir -p /srv/qfeed && curl -sfL https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/dev/ai/deploy.sh -o /srv/qfeed/deploy.sh && cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"],"executionTimeout":["600"]}' \
+            --timeout-seconds 600 \
+            --comment "Deploy AI ${{ steps.meta.outputs.short_sha }}" \
+            --output text --query "Command.CommandId")
+          echo "command_id=${COMMAND_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for deployment
+        run: |
+          for i in $(seq 1 60); do
+            sleep 10
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+              --query "CommandInvocations[0].Status" --output text 2>/dev/null || echo "Pending")
+            echo "  Status: ${STATUS} (${i}0s)"
+            if [ "$STATUS" = "Success" ]; then echo "Deploy OK"; exit 0; fi
+            if [ "$STATUS" = "Failed" ] || [ "$STATUS" = "TimedOut" ]; then
+              echo "Deploy failed: ${STATUS}"
+              INSTANCE_ID=$(aws ssm list-command-invocations \
+                --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+                --query "CommandInvocations[0].InstanceId" --output text)
+              aws ssm get-command-invocation \
+                --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+                --instance-id "$INSTANCE_ID" \
+                --query "[StandardOutputContent,StandardErrorContent]" --output text || true
+              exit 1
+            fi
+          done
+          echo "Timed out"; exit 1
+
+      - name: Discord 알림 (Dev 배포 성공)
+        if: success()
+        continue-on-error: true
+        run: |
+          curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"✅ AI Dev 배포 완료\",\"description\":\"이미지 \`${{ steps.meta.outputs.short_sha }}\` 배포 성공\",\"color\":3066993}]}"
+
+  # NOTE: prod 인프라 전환 완료 후 deploy-dev와 동일한 방식(OIDC+SSM)으로 교체 예정
+  deploy-prod:
+    name: Deploy to EC2 (Prod)
+    runs-on: ubuntu-latest
+    needs: ci
+
+    # main 브랜치로 push된 경우에만 배포 실행 (PR에서는 실행하지 않음)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/qfeed-prod-role-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if image exists
+        id: check
+        run: |
+          aws ecr describe-images \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-ids imageTag=${{ steps.meta.outputs.short_sha }} \
+            > /dev/null 2>&1 && echo "exists=true" >> "$GITHUB_OUTPUT" || echo "exists=false" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.check.outputs.exists == 'false'
+
+      - name: Build and push
+        if: steps.check.outputs.exists == 'false'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          tags: ${{ steps.meta.outputs.image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy via SSM
+        id: ssm-deploy
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets '[{"Key":"tag:Name","Values":["qfeed-prod-ec2-ai"]}]' \
+            --parameters '{"commands":["mkdir -p /srv/qfeed && curl -sfL https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/prod/ai/deploy.sh -o /srv/qfeed/deploy.sh && cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"],"executionTimeout":["600"]}' \
+            --timeout-seconds 600 \
+            --comment "Deploy AI ${{ steps.meta.outputs.short_sha }}" \
+            --output text --query "Command.CommandId")
+          echo "command_id=${COMMAND_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for deployment
+        run: |
+          for i in $(seq 1 60); do
+            sleep 10
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+              --query "CommandInvocations[0].Status" --output text 2>/dev/null || echo "Pending")
+            echo "  Status: ${STATUS} (${i}0s)"
+            if [ "$STATUS" = "Success" ]; then echo "Deploy OK"; exit 0; fi
+            if [ "$STATUS" = "Failed" ] || [ "$STATUS" = "TimedOut" ]; then
+              echo "Deploy failed: ${STATUS}"
+              INSTANCE_ID=$(aws ssm list-command-invocations \
+                --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+                --query "CommandInvocations[0].InstanceId" --output text)
+              aws ssm get-command-invocation \
+                --command-id "${{ steps.ssm-deploy.outputs.command_id }}" \
+                --instance-id "$INSTANCE_ID" \
+                --query "[StandardOutputContent,StandardErrorContent]" --output text || true
+              exit 1
+            fi
+          done
+          echo "Timed out"; exit 1
+
+      - name: Discord 알림 (Prod 배포 성공)
+        if: success()
+        continue-on-error: true
+        run: |
+          curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"✅ AI Prod 배포 완료\",\"description\":\"이미지 \`${{ steps.meta.outputs.short_sha }}\` 배포 성공\",\"color\":3066993}]}"
+
+  discord-ci-failure:
+    name: Discord 알림 (CI 실패)
+    runs-on: ubuntu-latest
+    needs: ci
+    if: always() && needs.ci.result == 'failure'
+    steps:
+      - name: 실패한 Step 조회
+        id: failed
+        run: |
+          RES=$(curl -sS -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs")
+          FAILED_JOB_ID=$(echo "$RES" | jq -r '.jobs[] | select(.name == "CI - Lint and Test") | .id')
+          if [ -n "$FAILED_JOB_ID" ]; then
+            STEPS_RES=$(curl -sS -H "Authorization: Bearer ${{ github.token }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/jobs/$FAILED_JOB_ID")
+            FAILED_STEP=$(echo "$STEPS_RES" | jq -r '.steps[] | select(.conclusion == "failure") | .name' | head -1)
+          fi
+          [ -z "$FAILED_STEP" ] && FAILED_STEP="(확인 불가)"
+          echo "step=$FAILED_STEP" >> $GITHUB_OUTPUT
+
+      - name: Discord 알림 (CI 실패)
+        continue-on-error: true
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg step "${{ steps.failed.outputs.step }}" \
+            --arg ref "${{ github.ref_name }}" \
+            --arg sha "${{ github.sha }}" \
+            --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              embeds: [{
+                title: "❌ AI CI 실패",
+                description: ("**실패한 Step:** " + $step),
+                color: 15158332,
+                fields: [
+                  {name: "브랜치", value: $ref, inline: true},
+                  {name: "커밋", value: ("`" + $sha + "`"), inline: true},
+                  {name: "워크플로우", value: ("[Run 보기](" + $url + ")"), inline: false}
+                ],
+                timestamp: $ts
+              }]
+            }')
+          curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
+
+  discord-deploy-dev-failure:
+    name: Discord 알림 (Dev 배포 실패)
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    if: always() && needs.deploy-dev.result == 'failure'
+    steps:
+      - name: Discord 알림 (Dev 배포 실패)
+        continue-on-error: true
+        run: |
+          curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"❌ AI Dev 배포 실패\",\"color\":15158332,\"fields\":[{\"name\":\"브랜치\",\"value\":\"${{ github.ref_name }}\",\"inline\":true},{\"name\":\"커밋\",\"value\":\"\`${{ github.sha }}\`\",\"inline\":true},{\"name\":\"워크플로우\",\"value\":\"[Run 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}]}]}"
+
+  discord-deploy-prod-failure:
+    name: Discord 알림 (Prod 배포 실패)
+    runs-on: ubuntu-latest
+    needs: deploy-prod
+    if: always() && needs.deploy-prod.result == 'failure'
+    steps:
+      - name: Discord 알림 (Prod 배포 실패)
+        continue-on-error: true
+        run: |
+          curl -sS -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"❌ AI Prod 배포 실패\",\"color\":15158332,\"fields\":[{\"name\":\"브랜치\",\"value\":\"${{ github.ref_name }}\",\"inline\":true},{\"name\":\"커밋\",\"value\":\"\`${{ github.sha }}\`\",\"inline\":true},{\"name\":\"워크플로우\",\"value\":\"[Run 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}]}]}"

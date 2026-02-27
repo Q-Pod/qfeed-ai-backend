@@ -6,10 +6,20 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.42.33",
+    "colorama>=0.4.6",
+    "elevenlabs>=2.36.0",
     "fastapi>=0.128.0",
     "google-genai>=1.60.0",
     "jupyterlab>=4.5.2",
+    "kiwipiepy>=0.22.2",
+    "korcen>=1.0.2",
+    "langchain>=1.2.9",
+    "langchain-core>=1.2.9",
+    "langchain-google-genai>=4.2.0",
+    "langfuse>=3.14.5",
+    "langgraph>=1.0.8",
     "pydantic-settings>=2.12.0",
+    "sentence-transformers>=5.2.2",
     "uvicorn[standard]>=0.40.0",
 ]
 
