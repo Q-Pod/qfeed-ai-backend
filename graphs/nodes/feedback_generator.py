@@ -24,7 +24,7 @@ def group_turns_by_topic(turns: list[QATurn]) -> dict[int, dict]:
 
         # 메인 질문 추출 (첫 번째 main 타입)
         main_turn = next(
-            (t for t in sorted_turns if t.turn_type == "main"),
+            (t for t in sorted_turns if t.turn_type == "new_topic"),
             sorted_turns[0]  # fallback
         )
         main_question = main_turn.question
@@ -34,7 +34,7 @@ def group_turns_by_topic(turns: list[QATurn]) -> dict[int, dict]:
         # Q&A 텍스트 포맷팅
         qa_parts = []
         for turn in sorted_turns:
-            prefix = "[메인]" if turn.turn_type == "main" else "[꼬리]"
+            prefix = "[메인]" if turn.turn_type == "new_topic" else "[꼬리]"
             qa_parts.append(f"{prefix} Q: {turn.question}\nA: {turn.answer_text}")
         
         result[topic_id] = {
