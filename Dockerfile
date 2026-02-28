@@ -26,8 +26,9 @@ RUN mkdir -p /app/.cache/huggingface /app/.cache/sentence_transformers
 
 # appuser 홈을 /app으로 지정 (/nonexistent 방지)
 RUN addgroup --system appgroup \
-    && adduser --system --ingroup appgroup --home /app appuser \
-    && chown -R appuser:appgroup /app
+    && adduser --system --uid 1000 --ingroup appgroup --home /app appuser \
+    && mkdir -p /var/log/qfeed/ai \
+    && chown -R appuser:appgroup /app /var/log/qfeed/ai
 
 USER appuser
 
