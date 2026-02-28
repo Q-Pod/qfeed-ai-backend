@@ -92,7 +92,7 @@ def build_follow_up_prompt(
     # 현재 토픽 카테고리 추출
     category = None
     if topic_turns:
-        main_turn = next((t for t in topic_turns if t.turn_type == "main"), topic_turns[0])
+        main_turn = next((t for t in topic_turns if t.turn_type == "new_topic"), topic_turns[0])
         category = main_turn.category
     
     category_str = _format_category(category)
@@ -129,7 +129,7 @@ def _format_topic_history(topic_turns: list[QATurn]) -> str:
     
     formatted = []
     for turn in sorted_turns:
-        prefix = "[메인 질문]" if turn.turn_type == "main" else "[꼬리질문]"
+        prefix = "[메인 질문]" if turn.turn_type == "new_topic" else "[꼬리질문]"
         formatted.append(
             f"{prefix}\n"
             f"Q: {turn.question}\n"

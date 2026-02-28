@@ -64,7 +64,7 @@ async def new_topic_generator(state: QuestionState) -> dict:
         question_text=combined_text,
         category=category,
         topic_id=new_topic_id,
-        turn_type="main",
+        turn_type="new_topic",
         is_session_ended=False,
         end_reason=None,
         is_bad_case=False,

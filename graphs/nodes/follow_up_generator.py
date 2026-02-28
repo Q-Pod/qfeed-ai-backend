@@ -24,7 +24,7 @@ async def follow_up_generator(state: QuestionState) -> dict:
         raise ValueError(f"No history found for topic_id={current_topic_id}")
     
     # 메인 질문의 카테고리 사용
-    main_turn = next((t for t in current_topic_turns if t.turn_type == "main"), None)
+    main_turn = next((t for t in current_topic_turns if t.turn_type == "new_topic"), None)
     current_category = main_turn.category if main_turn else current_topic_turns[0].category
     
     logger.debug(

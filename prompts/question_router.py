@@ -120,7 +120,7 @@ def _format_interview_history(history: list) -> str:
     
     formatted = []
     for turn in history:
-        prefix = "[메인]" if turn.turn_type == "main" else "[꼬리]"
+        prefix = "[메인]" if turn.turn_type == "new_topic" else "[꼬리]"
         cat_str = _format_category(turn.category)
         formatted.append(f"{prefix} [{cat_str}] Topic {turn.topic_id}\nQ: {turn.question}\nA: {turn.answer_text}")
     return "\n\n".join(formatted)

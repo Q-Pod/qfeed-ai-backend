@@ -12,7 +12,7 @@ async def rubric_evaluator(state: FeedbackGraphState) -> dict:
     """루브릭 기반 평가 노드"""
     logger.debug(f"rubric evaluator start | interview_type={state['interview_type']}")
 
-    llm = get_llm_provider("vllm")
+    llm = get_llm_provider("gemini")
 
     # 토픽별 카테고리 정보 추출
     categories_in_session = list(set(
