@@ -153,7 +153,7 @@ def setup_logging(environment: str = "local", log_dir: str = "logs") -> None:
     root_logger.addHandler(console_handler)
     
     # 프로덕션: 파일 핸들러 추가
-    if environment == "prod":
+    if environment in ("prod", "dev"):
         log_path = Path(log_dir)
         log_path.mkdir(parents=True, exist_ok=True)
         
@@ -197,7 +197,7 @@ def _setup_metrics_logger(environment: str, log_dir: str, formatter: logging.For
     metrics_console.addFilter(RequestContextFilter())
     metrics_logger.addHandler(metrics_console)
     
-    if environment == "prod":
+    if environment in ("prod", "dev"):
         log_path = Path(log_dir)
         metrics_handler = TimedRotatingFileHandler(
             log_path / "metrics.log",
