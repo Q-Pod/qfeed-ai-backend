@@ -11,6 +11,8 @@ from core.tracing import flush
 from providers.embedding.sentence_transformer import get_embedding_provider
 from services.bad_case_checker import _get_kiwi
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 settings = get_settings()
 setup_logging(environment=settings.ENVIRONMENT, log_dir=settings.log_directory)
 logger = get_logger(__name__)
@@ -40,6 +42,7 @@ async def lifespan(app: FastAPI):
     logger.info("end of app")
 
 app = FastAPI(lifespan=lifespan)
+Instrumentator().instrument(app).expose(app)  # /metrics 엔드포인트 자동 생성
 app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(stt.router, prefix="/ai", tags=["stt"])
