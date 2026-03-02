@@ -61,7 +61,7 @@ async def feedback_generator(
     )
     
     if state["interview_type"] == InterviewType.PRACTICE_INTERVIEW:
-        # 단일 토픽: 종합 피드백만 생성
+        # 연습 모드 : 종합 피드백만 생성
         logger.debug("| single topic feedback generate start")
         result = await llm.generate_structured(
             prompt=build_practice_mode_feedback_prompt(
@@ -73,7 +73,7 @@ async def feedback_generator(
             response_model=OverallFeedback,  # 종합만
             system_prompt=system_prompt,
             temperature=0.5,
-            max_tokens=1000,
+            max_tokens=2000,
         )
         logger.info("practice mode feedback generate completed")
         return {
@@ -82,7 +82,7 @@ async def feedback_generator(
             "current_step": "feedback_generator",
         }
     else:
-        # 실전모드 : 토픽별 피드백 + 종합 피드백
+        # 실전 모드 : 토픽별 피드백 + 종합 피드백
         logger.debug(f" | multi feedback generate start | topics={len(grouped_interview)}")
         result = await llm.generate_structured(
             prompt=build_real_mode_feedback_prompt(
@@ -94,7 +94,7 @@ async def feedback_generator(
             response_model=RealModeFeedback,
             system_prompt=system_prompt,
             temperature=0.5,
-            max_tokens=1000,
+            max_tokens=1500,
         )
         logger.info("real mode feedback generate completed")
         return {

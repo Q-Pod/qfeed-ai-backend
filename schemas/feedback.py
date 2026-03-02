@@ -84,6 +84,11 @@ def parse_category(question_type: QuestionType, category_value: str) -> Question
 
 ## BAD CASE 관련 Schema
 
+class InappropriateCheckResult(BaseModel):
+    """비속어/부적절 표현 LLM 판별 결과"""
+    is_inappropriate: bool = Field(..., description="비속어/부적절 표현 포함 여부")
+
+
 class BadCaseType(str, Enum):
     '''Bad Case 유형'''
     INSUFFICIENT = "INSUFFICIENT" # 너무 짧거나 의미 없는 답변, 반복적인 패턴 감지

@@ -23,6 +23,11 @@ def get_llm_provider(provider: str | None = None) -> LLMProvider:
                 primary=VLLMProvider(),
                 fallback=GeminiProvider(thinking_budget=0),
             )
+        elif provider_name == "gemini_lite":
+            _llm_cache[provider_name] = GeminiProvider(
+                model=settings.GEMINI_LITE_MODEL_ID,
+                thinking_budget=0,
+            )
         else:
             _llm_cache[provider_name] = GeminiProvider(thinking_budget=1024)
     return _llm_cache[provider_name]

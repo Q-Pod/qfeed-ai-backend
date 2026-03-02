@@ -157,6 +157,37 @@ class QuestionGenerateResponse(BaseResponse[GeneratedQuestion]):
             data=generated,
         )
 
+    @classmethod
+    def from_user_requested_end(
+        cls,
+        user_id: int,
+        session_id: str,
+        interview_history: list[QATurn],
+    ) -> "QuestionGenerateResponse":
+        """사용자 요청(면접 종료 발화)으로 세션 종료 시 응답 생성"""
+        current_topic_id = 1
+        last_turn_type: Literal["new_topic", "follow_up"] = "new_topic"
+        last_category = None
+        if interview_history:
+            current_topic_id = max(t.topic_id for t in interview_history)
+            last_turn = interview_history[-1]
+            last_turn_type = last_turn.turn_type
+            last_category = last_turn.category
+
+        generated = GeneratedQuestion(
+            user_id=user_id,
+            session_id=session_id,
+            question_text="수고하셨습니다. 면접을 종료합니다.",
+            category=last_category,
+            topic_id=current_topic_id,
+            turn_type=last_turn_type,
+            is_session_ended=True,
+            end_reason="사용자 요청으로 면접 종료",
+            is_bad_case=False,
+            bad_case_feedback=None,
+        )
+        return cls(message="session_ended", data=generated)
+
 
 # ============================================================
 # LLM 구조화 출력용 스키마
@@ -166,6 +197,18 @@ class RouterOutput(BaseModel):
     """라우터 노드 LLM 출력"""
     decision: RouteDecision = Field(..., description="분기 결정")
     reasoning: str = Field(..., description="결정 이유")
+
+
+class SessionEndIntentOutput(BaseModel):
+    """사용자 발화가 면접 종료 요청인지 분류 결과"""
+
+    should_end: bool = Field(..., description="사용자가 지금 면접 종료를 요청하는지 여부")
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="판단 confidence (0.0~1.0). 보수적으로 높을 때만 종료.",
+    )
 
 
 class QuestionOutput(BaseModel):

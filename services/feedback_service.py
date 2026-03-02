@@ -38,7 +38,7 @@ class FeedbackService:
         )
 
         # Step 1: bad case 체크(연습모드에서만) - bad case로 필터링 되면 bad case 응답 
-        bad_case_result = self._check_bad_case(request)
+        bad_case_result = await self._check_bad_case(request)
         if bad_case_result:
             logger.info(f"Bad case detected | type={bad_case_result.bad_case_feedback.type}")
             return FeedbackResponse.from_bad_case(
@@ -64,7 +64,7 @@ class FeedbackService:
         )
     
     @observe(name="check bad case", as_type="tool")
-    def _check_bad_case(self, request: FeedbackRequest) -> BadCaseResult | None:
+    async def _check_bad_case(self, request: FeedbackRequest) -> BadCaseResult | None:
         """Bad case 체크, 해당 시 응답 반환"""
         # 연습모드가 아니면 스킵
         if request.interview_type != InterviewType.PRACTICE_INTERVIEW:
@@ -74,7 +74,7 @@ class FeedbackService:
         try:
             checker = get_bad_case_checker()
             last_turn = request.interview_history[0]
-            result = checker.check(last_turn.question, last_turn.answer_text)
+            result = await checker.check(last_turn.question, last_turn.answer_text)
             update_observation(output={"is_bad_case": result.is_bad_case})
             
             return result if result.is_bad_case else None
