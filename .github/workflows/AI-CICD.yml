@@ -14,11 +14,13 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: qfeed-ecr-ai
+  DEPLOY_RAW_BASE_DEV: https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/dev/ai
+  DEPLOY_RAW_BASE_PROD: https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/prod/ai
 
 jobs:
   ci:
     name: CI - Lint and Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v4
@@ -123,7 +125,7 @@ jobs:
   deploy-dev:
     name: Deploy to Dev
     needs: ci
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
 
     steps:
@@ -173,7 +175,17 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets '[{"Key":"tag:Name","Values":["qfeed-dev-ec2-ai"]}]' \
-            --parameters '{"commands":["mkdir -p /srv/qfeed && curl -sfL https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/dev/ai/deploy.sh -o /srv/qfeed/deploy.sh && cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"],"executionTimeout":["600"]}' \
+            --parameters '{
+              "commands":[
+                "set -e",
+                "mkdir -p /srv/qfeed/alloy",
+                "curl -sfL ${{ env.DEPLOY_RAW_BASE_DEV }}/deploy.sh          -o /srv/qfeed/deploy.sh",
+                "curl -sfL ${{ env.DEPLOY_RAW_BASE_DEV }}/docker-compose.yml -o /srv/qfeed/docker-compose.yml",
+                "curl -sfL ${{ env.DEPLOY_RAW_BASE_DEV }}/alloy/config.alloy -o /srv/qfeed/alloy/config.alloy",
+                "cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"
+              ],
+              "executionTimeout":["600"]
+            }' \
             --timeout-seconds 600 \
             --comment "Deploy AI ${{ steps.meta.outputs.short_sha }}" \
             --output text --query "Command.CommandId")
@@ -210,10 +222,9 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"embeds\":[{\"title\":\"✅ AI Dev 배포 완료\",\"description\":\"이미지 \`${{ steps.meta.outputs.short_sha }}\` 배포 성공\",\"color\":3066993}]}"
 
-  # NOTE: prod 인프라 전환 완료 후 deploy-dev와 동일한 방식(OIDC+SSM)으로 교체 예정
   deploy-prod:
     name: Deploy to EC2 (Prod)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs: ci
 
     # main 브랜치로 push된 경우에만 배포 실행 (PR에서는 실행하지 않음)
@@ -267,7 +278,17 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets '[{"Key":"tag:Name","Values":["qfeed-prod-ec2-ai"]}]' \
-            --parameters '{"commands":["mkdir -p /srv/qfeed && curl -sfL https://raw.githubusercontent.com/100-hours-a-week/17-JinyUs-Q-Feed-Cloud/main/deploy/prod/ai/deploy.sh -o /srv/qfeed/deploy.sh && cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"],"executionTimeout":["600"]}' \
+            --parameters '{
+              "commands":[
+                "set -e",
+                "mkdir -p /srv/qfeed/alloy",
+                "curl -sfL ${{ env.DEPLOY_RAW_BASE_PROD }}/deploy.sh          -o /srv/qfeed/deploy.sh",
+                "curl -sfL ${{ env.DEPLOY_RAW_BASE_PROD }}/docker-compose.yml -o /srv/qfeed/docker-compose.yml",
+                "curl -sfL ${{ env.DEPLOY_RAW_BASE_PROD }}/alloy/config.alloy -o /srv/qfeed/alloy/config.alloy",
+                "cd /srv/qfeed && bash deploy.sh ${{ steps.meta.outputs.short_sha }}"
+              ],
+              "executionTimeout":["600"]
+            }' \
             --timeout-seconds 600 \
             --comment "Deploy AI ${{ steps.meta.outputs.short_sha }}" \
             --output text --query "Command.CommandId")
@@ -306,7 +327,7 @@ jobs:
 
   discord-ci-failure:
     name: Discord 알림 (CI 실패)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs: ci
     if: always() && needs.ci.result == 'failure'
     steps:
@@ -354,7 +375,7 @@ jobs:
 
   discord-deploy-dev-failure:
     name: Discord 알림 (Dev 배포 실패)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs: deploy-dev
     if: always() && needs.deploy-dev.result == 'failure'
     steps:
@@ -367,7 +388,7 @@ jobs:
 
   discord-deploy-prod-failure:
     name: Discord 알림 (Prod 배포 실패)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs: deploy-prod
     if: always() && needs.deploy-prod.result == 'failure'
     steps:
