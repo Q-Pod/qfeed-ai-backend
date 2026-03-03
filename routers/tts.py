@@ -32,12 +32,15 @@ async def text_to_speech(request: TTSRequest) -> Response:
     
     body = (
         f"--{boundary}\r\n"
+        f"Content-Disposition: form-data; name=\"meta\"\r\n"
         f"Content-Type: application/json; charset=utf-8\r\n"
         f"\r\n"
         f"{json_content}\r\n"
         f"--{boundary}\r\n"
         f"Content-Type: audio/mpeg\r\n"
-        f"Content-Disposition: attachment\r\n"
+        f"Content-Disposition: attachment; filename=\"tts_output.mp3\"\r\n"
+        f"Content-Transfer-Encoding: binary\r\n"
+        f"\r\n"
     ).encode('utf-8') + audio_data + f"\r\n--{boundary}--\r\n".encode('utf-8')
 
     logger.info(f"TTS 요청 완료 | user_id={request.user_id}, audio_size={len(audio_data)} bytes")
