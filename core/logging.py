@@ -86,6 +86,10 @@ class StandardLogFormatter(logging.Formatter):
 # Middleware
 # ============================================
 
+# 로깅 제외 경로 (헬스체크, 메트릭 등 빈번한 호출)
+LOG_EXCLUDE_PATHS = frozenset({"/metrics"})
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
     요청별 컨텍스트 설정 및 HTTP 요청/응답 로깅 미들웨어
@@ -93,6 +97,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     - requestId 설정 (클라이언트 제공 or 자동 생성)
     - 요청 시작/완료 로깅
     - userId 추출 (요청 body에서)
+    - LOG_EXCLUDE_PATHS에 있는 경로는 로깅하지 않음
     """
     
     async def dispatch(self, request: Request, call_next):
@@ -107,10 +112,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         )
         set_request_context(ctx)
         
+        skip_logging = request.url.path in LOG_EXCLUDE_PATHS
         logger = get_logger("http")
         
-        # 요청 시작 로깅
-        logger.info("요청 시작")
+        # 요청 시작 로깅 (제외 경로는 스킵)
+        if not skip_logging:
+            logger.info("요청 시작")
         
         start_time = time.perf_counter()
 
@@ -118,8 +125,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             
-            # 요청 완료 로깅 (status 포함)
-            logger.info(f"요청 완료 | status={response.status_code} | duration={elapsed_ms:.2f}ms")
+            # 요청 완료 로깅 (제외 경로는 스킵)
+            if not skip_logging:
+                logger.info(f"요청 완료 | status={response.status_code} | duration={elapsed_ms:.2f}ms")
             
             # 응답 헤더에 requestId 추가
             response.headers["X-Request-ID"] = request_id
@@ -128,7 +136,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             
         except Exception as e:
             elapsed_ms = (time.perf_counter() - start_time) * 1000
-            logger.error(f"요청 실패 | duration={elapsed_ms:.2f}ms | {type(e).__name__}: {e}")
+            if not skip_logging:
+                logger.error(f"요청 실패 | duration={elapsed_ms:.2f}ms | {type(e).__name__}: {e}")
             raise
 
 def setup_logging(environment: str = "local", log_dir: str = "logs") -> None:

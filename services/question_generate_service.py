@@ -12,6 +12,7 @@ from schemas.feedback import BadCaseResult
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 from services.bad_case_checker import get_bad_case_checker
+from services.session_end_detector import is_user_requested_session_end
 from graphs.question.state import create_initial_state
 from graphs.question.question_graph import run_question_pipeline
 
@@ -40,9 +41,28 @@ class QuestionGenerateService:
             },
         )
 
+        # Step 0: 사용자 면접 종료 요청 감지 → 즉시 END_SESSION 응답 (badcase/라우터 생략)
+        if request.interview_history:
+            last_turn = request.interview_history[-1]
+            should_end, confidence, reason = await is_user_requested_session_end(
+                last_question=last_turn.question,
+                answer_text=last_turn.answer_text,
+            )
+            if should_end:
+                logger.info(
+                    f"User requested session end | session_id={request.session_id} | "
+                    f"confidence={confidence:.2f} | reason={reason} | "
+                    f"answer_text_preview={last_turn.answer_text[:50]!r}..."
+                )
+                return QuestionGenerateResponse.from_user_requested_end(
+                    user_id=request.user_id,
+                    session_id=request.session_id,
+                    interview_history=request.interview_history,
+                )
+
         # Step 1: Bad case 체크 (히스토리가 있을 때만)
         if request.interview_history:
-            bad_case_result = self._check_bad_case(request)
+            bad_case_result = await self._check_bad_case(request)
             if bad_case_result:
                 logger.info(f"Bad case detected | type={bad_case_result.bad_case_feedback.type}")
                 return QuestionGenerateResponse.from_bad_case(
@@ -61,7 +81,7 @@ class QuestionGenerateService:
         return QuestionGenerateResponse.from_graph_result(result)
 
     @observe(name="check_bad_case", as_type="tool")
-    def _check_bad_case(
+    async def _check_bad_case(
         self, 
         request: QuestionGenerateRequest,
     ) -> BadCaseResult | None:
@@ -74,7 +94,7 @@ class QuestionGenerateService:
         try:
             checker = get_bad_case_checker()
             last_turn = request.interview_history[-1]
-            result = checker.check(last_turn.question, last_turn.answer_text)
+            result = await checker.check(last_turn.question, last_turn.answer_text)
             update_observation(output={"is_bad_case": result.is_bad_case})
             
             if result.is_bad_case:

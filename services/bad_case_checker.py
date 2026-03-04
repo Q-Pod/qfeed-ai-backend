@@ -3,11 +3,12 @@ import re
 from functools import lru_cache
 
 from kiwipiepy import Kiwi
-from korcen import korcen
 from sentence_transformers.util import cos_sim
 
-from schemas.feedback import BadCaseResult, BadCaseType
+from schemas.feedback import BadCaseResult, BadCaseType, InappropriateCheckResult
 from providers.embedding.sentence_transformer import get_embedding_provider
+from prompts.bad_case import INAPPROPRIATE_CHECK_PROMPT
+from core.dependencies import get_llm_provider
 from core.logging import get_logger
 from langfuse import observe
 
@@ -31,11 +32,11 @@ class BadCaseChecker:
         self.similarity_threshold = similarity_threshold
         self._kiwi = _get_kiwi()
         self._model = get_embedding_provider()
+        # Lite 모델은 dependency를 통해 공용으로 재사용
+        self._llm = get_llm_provider("gemini_lite")
 
-    def check_inappropriate(self, answer: str) -> bool:
-        return korcen.check(answer)
-    
     def check_insufficient(self, answer: str) -> bool:
+        """불충분 답변 체크 - 반복 패턴 및 의미 토큰 수 기반"""
         if self._has_repetitive_pattern(answer):
             return True
         if self._count_meaningful_tokens(answer) < self.min_meaningful_tokens:
@@ -43,14 +44,24 @@ class BadCaseChecker:
         return False
 
     def check_off_topic(self, question: str, answer: str) -> bool:
-        """주제 이탈 체크 - 임베딩 사용"""
-
+        """주제 이탈 체크 - 임베딩 코사인 유사도 기반"""
         q_emb, a_emb = self._model.encode([question, answer])
         similarity = cos_sim(q_emb, a_emb).item()
+        return similarity < self.similarity_threshold
 
-        is_off_topic = similarity < self.similarity_threshold
-
-        return is_off_topic
+    async def check_inappropriate(self, answer: str) -> bool:
+        """부적절 표현 체크 - Gemini LLM 기반 문맥 판별"""
+        try:
+            result = await self._llm.generate_structured(
+                prompt=INAPPROPRIATE_CHECK_PROMPT.format(answer=answer),
+                response_model=InappropriateCheckResult,
+                temperature=0.0,
+                max_tokens=50,
+            )
+            return result.is_inappropriate
+        except Exception as e:
+            logger.warning(f"Inappropriate check LLM 실패, 정상 처리 | {type(e).__name__}: {e}")
+            return False
 
     def _count_meaningful_tokens(self, text: str) -> int:
         try:
@@ -71,33 +82,22 @@ class BadCaseChecker:
         return False
     
     @observe(name="bad_case_check", as_type="tool")
-    def check(self, question: str, answer: str) -> BadCaseResult:
-        """단일 Q&A 쌍 체크 - 메인 인터페이스"""
-
-        result = None
-        checks_performed = []
-
-        # 1. 부적절 표현 체크
-        if self.check_inappropriate(answer):
-            result = BadCaseResult.bad(BadCaseType.INAPPROPRIATE)
-            checks_performed.append("inappropriate")
+    async def check(self, question: str, answer: str) -> BadCaseResult:
+        """단일 Q&A 쌍 체크 - 메인 인터페이스
         
-        # 2. 불충분 답변 체크
-        elif self.check_insufficient(answer):
-            result = BadCaseResult.bad(BadCaseType.INSUFFICIENT)
-            checks_performed.append("insufficient")
+        비용 최적화: cheap 체크(동기)를 먼저 실행하고,
+        통과한 경우에만 LLM(비동기)을 호출한다.
+        """
+        if self.check_insufficient(answer):
+            return BadCaseResult.bad(BadCaseType.INSUFFICIENT)
         
-        # 3. 주제 이탈 체크
-        elif self.check_off_topic(question, answer):
-            result = BadCaseResult.bad(BadCaseType.OFF_TOPIC)
-            checks_performed.append("off_topic")
+        if self.check_off_topic(question, answer):
+            return BadCaseResult.bad(BadCaseType.OFF_TOPIC)
         
-        else:
-            result = BadCaseResult.normal()
-            checks_performed = ["inappropriate", "insufficient", "off_topic"]
+        if await self.check_inappropriate(answer):
+            return BadCaseResult.bad(BadCaseType.INAPPROPRIATE)
         
-        logger.debug("Bad case 없음")
-        return result
+        return BadCaseResult.normal()
     
     
 @lru_cache(maxsize=1)

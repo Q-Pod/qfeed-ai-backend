@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     # gemini
     GEMINI_API_KEY: str
     GEMINI_MODEL_ID: str = "gemini-2.5-flash"
+    GEMINI_LITE_MODEL_ID: str = "gemini-2.5-flash-lite"
 
     # Callback 설정 (V2)
     feedback_callback_url: str = "http://backend-server/ai/interview/feedback/callback"
@@ -46,7 +47,6 @@ class Settings(BaseSettings):
     GPU_LLM_URL: str | None = None   
 
     LLM_MODEL_ID: str = "skt/A.X-4.0-Light"
-    # LLM_MODEL_ID: str = "openai/gpt-oss-20b"
 
     # TTS(eleven_labs)
     ELEVENLABS_API_KEY: str

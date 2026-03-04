@@ -1,7 +1,6 @@
 # graphs/nodes/new_topic_generator.py
 
 """새 토픽 질문 생성 노드"""
-
 from langfuse import observe
 
 from schemas.question import QuestionOutput, GeneratedQuestion, QuestionType
@@ -96,7 +95,8 @@ async def _generate_new_topic_llm(state: QuestionState, forced_category: Questio
     
     llm = get_llm_provider()
     
-    system_prompt = get_new_topic_system_prompt(llm.provider_name)
+    question_type = state.get("question_type", QuestionType.CS)
+    system_prompt = get_new_topic_system_prompt(llm.provider_name, question_type)
     user_prompt = build_new_topic_prompt(
         question_type=state.get("question_type", QuestionType.CS),
         forced_category=forced_category,
