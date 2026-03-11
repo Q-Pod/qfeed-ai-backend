@@ -14,19 +14,18 @@ settings = get_settings()
 
 class ElevenLabsTTSProvider:
     """ElevenLabs TTS Provider 구현체"""
-    
-    BASE_URL = "https://api.elevenlabs.io/v1"
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         voice_ids: Optional[list[str]] = None,
         model_id: Optional[str] = None,
+        base_url: Optional[str] = None,
     ):
         self.api_key = api_key or settings.ELEVENLABS_API_KEY
         self.voice_ids = voice_ids or settings.elevenlabs_voice_id_list
         self.model_id = model_id or settings.ELEVENLABS_MODEL_ID
-
+        self.base_url = base_url or settings.ELEVENLABS_BASE_URL
     def _get_random_voice_id(self) -> str:
         """랜덤하게 voice_id 선택"""
         return secrets.choice(self.voice_ids)
@@ -45,7 +44,7 @@ class ElevenLabsTTSProvider:
         # voice_id 지정 안 하면 랜덤 선택
         selected_voice_id = voice_id or self._get_random_voice_id()
 
-        url = f"{self.BASE_URL}/text-to-speech/{selected_voice_id}"
+        url = f"{self.base_url}/text-to-speech/{selected_voice_id}"
         
         headers = {
             "xi-api-key": self.api_key,
