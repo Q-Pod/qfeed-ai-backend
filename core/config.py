@@ -64,6 +64,17 @@ class Settings(BaseSettings):
     LANGFUSE_SECRET_KEY: str
     LANGFUSE_HOST: str = "https://us.cloud.langfuse.com"
 
+    # MongoDB
+    MONGODB_URI: str
+    MONGODB_DB_NAME: str
+    MONGODB_APP_NAME: str = "qfeed-ai"
+
+    MONGODB_MAX_POOL_SIZE: int = 20
+    MONGODB_MIN_POOL_SIZE: int = 1
+    MONGODB_SERVER_SELECTION_TIMEOUT_MS: int = 5000
+    MONGODB_CONNECT_TIMEOUT_MS: int = 5000
+    MONGODB_SOCKET_TIMEOUT_MS: int = 10000
+
     
     model_config = {
         "env_file": ".env",
@@ -88,6 +99,8 @@ def _load_ssm_secrets(base_path: str) -> None:
         "LANGFUSE_PUBLIC_KEY": "langfuse-public-key",
         "LANGFUSE_SECRET_KEY": "langfuse-secret-key",
         "LANGFUSE_BASE_URL": "langfuse-base-url",
+        "MONGODB_URI": "mongodb-uri",
+        "MONGODB_DB_NAME": "mongodb-db-name",
     }
 
     for env_var, key_name in ssm_keys.items():

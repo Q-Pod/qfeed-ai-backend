@@ -1,0 +1,691 @@
+# Winenu 포트폴리오 기술 스택 정규화 사전
+# 용도: 포트폴리오 질문 태깅 시 기술명 정규화, 취약점 프로파일 집계
+# 구조: group (고정 카테고리) > canonical tech entries (정규화된 기술 목록)
+#
+# 태깅 규칙:
+#   1. LLM은 canonical_key 목록에서 매칭되는 기술을 선택
+#   2. aliases에 해당하는 표현이 나오면 canonical_key로 정규화
+#   3. 목록에 없는 기술은 _unknown_ 접두사를 붙여 새 키를 제안
+#      예: _unknown_supabase
+
+groups:
+  - id: language
+    name: 프로그래밍 언어
+
+  - id: framework
+    name: 서버/애플리케이션 프레임워크
+
+  - id: frontend
+    name: 프론트엔드 라이브러리/프레임워크
+
+  - id: runtime
+    name: 런타임
+
+  - id: persistence
+    name: ORM / 데이터 접근 기술
+
+  - id: database
+    name: 데이터베이스
+
+  - id: cache
+    name: 캐시/인메모리 저장소
+
+  - id: messaging
+    name: 메시징/이벤트 시스템
+
+  - id: communication
+    name: API/통신 프로토콜
+
+  - id: infra
+    name: 인프라/서버/컨테이너
+
+  - id: cloud
+    name: 클라우드 플랫폼
+
+  - id: cloud_service
+    name: 클라우드 세부 서비스
+
+  - id: cicd
+    name: 배포/자동화
+
+  - id: observability
+    name: 로깅/모니터링/트레이싱
+
+  - id: testing
+    name: 테스트 도구
+
+techs:
+  # ══════════════════════════════════════
+  # 프로그래밍 언어
+  # ══════════════════════════════════════
+  - canonical_key: java
+    display_name: Java
+    group: language
+    aliases: [자바, JAVA, java17, java21, java11, openjdk, OpenJDK]
+
+  - canonical_key: python
+    display_name: Python
+    group: language
+    aliases: [파이썬, python3, py, Python3]
+
+  - canonical_key: javascript
+    display_name: JavaScript
+    group: language
+    aliases: [자바스크립트, JS, js, ES6, ES2015, ECMAScript]
+
+  - canonical_key: typescript
+    display_name: TypeScript
+    group: language
+    aliases: [타입스크립트, TS, ts]
+
+  - canonical_key: kotlin
+    display_name: Kotlin
+    group: language
+    aliases: [코틀린]
+
+  - canonical_key: go
+    display_name: Go
+    group: language
+    aliases: [golang, Golang, 고랭]
+
+  - canonical_key: cpp
+    display_name: C++
+    group: language
+    aliases: [C++, cpp, 씨플플]
+
+  - canonical_key: c
+    display_name: C
+    group: language
+    aliases: [C언어, 씨언어]
+
+  - canonical_key: rust
+    display_name: Rust
+    group: language
+    aliases: [러스트]
+
+  - canonical_key: swift
+    display_name: Swift
+    group: language
+    aliases: [스위프트]
+
+  - canonical_key: dart
+    display_name: Dart
+    group: language
+    aliases: [다트]
+
+  # ══════════════════════════════════════
+  # 서버/애플리케이션 프레임워크
+  # ══════════════════════════════════════
+  - canonical_key: spring_boot
+    display_name: Spring Boot
+    group: framework
+    aliases: [스프링부트, 스프링 부트, SpringBoot, spring-boot]
+
+  - canonical_key: spring_mvc
+    display_name: Spring MVC
+    group: framework
+    aliases: [스프링 MVC, spring-mvc, Spring Web MVC]
+
+  - canonical_key: spring_webflux
+    display_name: Spring WebFlux
+    group: framework
+    aliases: [스프링 웹플럭스, webflux, WebFlux]
+
+  - canonical_key: spring_batch
+    display_name: Spring Batch
+    group: framework
+    aliases: [스프링 배치, spring-batch]
+
+  - canonical_key: spring_cloud
+    display_name: Spring Cloud
+    group: framework
+    aliases: [스프링 클라우드, spring-cloud]
+
+  - canonical_key: fastapi
+    display_name: FastAPI
+    group: framework
+    aliases: [fast-api, fast_api]
+
+  - canonical_key: flask
+    display_name: Flask
+    group: framework
+    aliases: [플라스크]
+
+  - canonical_key: django
+    display_name: Django
+    group: framework
+    aliases: [장고, DRF, Django REST Framework]
+
+  - canonical_key: express
+    display_name: Express.js
+    group: framework
+    aliases: [express, expressjs, Express]
+
+  - canonical_key: nestjs
+    display_name: NestJS
+    group: framework
+    aliases: [nest, Nest.js, nest.js, 네스트]
+
+  - canonical_key: gin
+    display_name: Gin
+    group: framework
+    aliases: [gin-gonic]
+
+  - canonical_key: ktor
+    display_name: Ktor
+    group: framework
+    aliases: [케이터]
+
+  # ══════════════════════════════════════
+  # 프론트엔드 라이브러리/프레임워크
+  # ══════════════════════════════════════
+  - canonical_key: react
+    display_name: React
+    group: frontend
+    aliases: [리액트, ReactJS, react.js, React.js]
+
+  - canonical_key: nextjs
+    display_name: Next.js
+    group: frontend
+    aliases: [넥스트, next, NextJS, next.js]
+
+  - canonical_key: vue
+    display_name: Vue.js
+    group: frontend
+    aliases: [뷰, vuejs, Vue, vue.js]
+
+  - canonical_key: nuxtjs
+    display_name: Nuxt.js
+    group: frontend
+    aliases: [넉스트, nuxt, NuxtJS]
+
+  - canonical_key: angular
+    display_name: Angular
+    group: frontend
+    aliases: [앵귤러, AngularJS]
+
+  - canonical_key: svelte
+    display_name: Svelte
+    group: frontend
+    aliases: [스벨트, SvelteKit]
+
+  - canonical_key: flutter
+    display_name: Flutter
+    group: frontend
+    aliases: [플러터]
+
+  - canonical_key: react_native
+    display_name: React Native
+    group: frontend
+    aliases: [리액트 네이티브, RN, react-native]
+
+  - canonical_key: tailwindcss
+    display_name: Tailwind CSS
+    group: frontend
+    aliases: [테일윈드, tailwind, TailwindCSS]
+
+  - canonical_key: redux
+    display_name: Redux
+    group: frontend
+    aliases: [리덕스, Redux Toolkit, RTK]
+
+  - canonical_key: recoil
+    display_name: Recoil
+    group: frontend
+    aliases: [리코일]
+
+  - canonical_key: zustand
+    display_name: Zustand
+    group: frontend
+    aliases: [주스탄드]
+
+  # ══════════════════════════════════════
+  # 런타임
+  # ══════════════════════════════════════
+  - canonical_key: jvm
+    display_name: JVM
+    group: runtime
+    aliases: [자바 가상 머신, Java Virtual Machine]
+
+  - canonical_key: nodejs
+    display_name: Node.js
+    group: runtime
+    aliases: [노드, node, NodeJS, node.js]
+
+  - canonical_key: deno
+    display_name: Deno
+    group: runtime
+    aliases: [디노]
+
+  - canonical_key: bun
+    display_name: Bun
+    group: runtime
+    aliases: [번]
+
+  # ══════════════════════════════════════
+  # ORM / 데이터 접근 기술
+  # ══════════════════════════════════════
+  - canonical_key: jpa
+    display_name: JPA
+    group: persistence
+    aliases: [Java Persistence API, spring-data-jpa, Spring Data JPA]
+
+  - canonical_key: hibernate
+    display_name: Hibernate
+    group: persistence
+    aliases: [하이버네이트]
+
+  - canonical_key: mybatis
+    display_name: MyBatis
+    group: persistence
+    aliases: [마이바티스, iBatis]
+
+  - canonical_key: querydsl
+    display_name: QueryDSL
+    group: persistence
+    aliases: [쿼리DSL, querydsl]
+
+  - canonical_key: jdbc
+    display_name: JDBC
+    group: persistence
+    aliases: [Spring JDBC, JdbcTemplate]
+
+  - canonical_key: typeorm
+    display_name: TypeORM
+    group: persistence
+    aliases: [type-orm]
+
+  - canonical_key: prisma
+    display_name: Prisma
+    group: persistence
+    aliases: [프리즈마]
+
+  - canonical_key: sequelize
+    display_name: Sequelize
+    group: persistence
+    aliases: [시퀄라이즈]
+
+  - canonical_key: sqlalchemy
+    display_name: SQLAlchemy
+    group: persistence
+    aliases: [에스큐엘알케미]
+
+  # ══════════════════════════════════════
+  # 데이터베이스
+  # ══════════════════════════════════════
+  - canonical_key: mysql
+    display_name: MySQL
+    group: database
+    aliases: [마이에스큐엘, mysql8, MySQL8, MariaDB, mariadb]
+
+  - canonical_key: postgresql
+    display_name: PostgreSQL
+    group: database
+    aliases: [postgres, 포스트그레스, pg, Postgres]
+
+  - canonical_key: mongodb
+    display_name: MongoDB
+    group: database
+    aliases: [몽고, 몽고디비, mongo, Mongo]
+
+  - canonical_key: redis
+    display_name: Redis
+    group: database
+    aliases: [레디스]
+
+  - canonical_key: elasticsearch
+    display_name: Elasticsearch
+    group: database
+    aliases: [ES, 엘라스틱서치, elastic, Elastic Search]
+
+  - canonical_key: h2
+    display_name: H2
+    group: database
+    aliases: [H2 Database, h2db]
+
+  - canonical_key: sqlite
+    display_name: SQLite
+    group: database
+    aliases: [에스큐엘라이트]
+
+  - canonical_key: dynamodb
+    display_name: DynamoDB
+    group: database
+    aliases: [다이나모DB, AWS DynamoDB]
+
+  - canonical_key: neo4j
+    display_name: Neo4j
+    group: database
+    aliases: [네오포제이, 그래프DB]
+
+  # ══════════════════════════════════════
+  # 캐시/인메모리 저장소
+  # ══════════════════════════════════════
+  - canonical_key: redis_cache
+    display_name: Redis (Cache)
+    group: cache
+    aliases: [레디스 캐시, Redis Cache, Redis 캐싱]
+
+  - canonical_key: spring_cache
+    display_name: Spring Cache
+    group: cache
+    aliases: [스프링 캐시, "@Cacheable", "@CacheEvict"]
+
+  - canonical_key: memcached
+    display_name: Memcached
+    group: cache
+    aliases: [멤캐시드]
+
+  - canonical_key: cdn
+    display_name: CDN
+    group: cache
+    aliases: [CloudFront, cloudfront, 씨디엔]
+
+  - canonical_key: local_cache
+    display_name: Local Cache
+    group: cache
+    aliases: [로컬 캐시, Caffeine, Ehcache, Guava Cache]
+
+  # ══════════════════════════════════════
+  # 메시징/이벤트 시스템
+  # ══════════════════════════════════════
+  - canonical_key: kafka
+    display_name: Apache Kafka
+    group: messaging
+    aliases: [카프카, Kafka, kafka]
+
+  - canonical_key: rabbitmq
+    display_name: RabbitMQ
+    group: messaging
+    aliases: [래빗엠큐, rabbit, RabbitMQ]
+
+  - canonical_key: sqs
+    display_name: AWS SQS
+    group: messaging
+    aliases: [Simple Queue Service, SQS]
+
+  - canonical_key: sns
+    display_name: AWS SNS
+    group: messaging
+    aliases: [Simple Notification Service, SNS]
+
+  - canonical_key: redis_pubsub
+    display_name: Redis Pub/Sub
+    group: messaging
+    aliases: [레디스 펍섭, Redis PubSub]
+
+  - canonical_key: spring_event
+    display_name: Spring Event
+    group: messaging
+    aliases: [ApplicationEvent, "@EventListener", 스프링 이벤트]
+
+  # ══════════════════════════════════════
+  # API/통신 프로토콜
+  # ══════════════════════════════════════
+  - canonical_key: rest_api
+    display_name: REST API
+    group: communication
+    aliases: [RESTful, restful, REST, REST API]
+
+  - canonical_key: grpc
+    display_name: gRPC
+    group: communication
+    aliases: [grpc, GRPC, Protocol Buffers, protobuf]
+
+  - canonical_key: graphql
+    display_name: GraphQL
+    group: communication
+    aliases: [그래프큐엘, Apollo, apollo-graphql]
+
+  - canonical_key: websocket
+    display_name: WebSocket
+    group: communication
+    aliases: [웹소켓, ws, WS]
+
+  - canonical_key: stomp
+    display_name: STOMP
+    group: communication
+    aliases: [스톰프, STOMP over WebSocket]
+
+  - canonical_key: sse
+    display_name: SSE
+    group: communication
+    aliases: [Server-Sent Events, 서버 센트 이벤트]
+
+  - canonical_key: openapi
+    display_name: OpenAPI / Swagger
+    group: communication
+    aliases: [Swagger, 스웨거, swagger-ui, Springdoc]
+
+  # ══════════════════════════════════════
+  # 인프라/서버/컨테이너
+  # ══════════════════════════════════════
+  - canonical_key: docker
+    display_name: Docker
+    group: infra
+    aliases: [도커, docker-compose, Docker Compose, Dockerfile]
+
+  - canonical_key: kubernetes
+    display_name: Kubernetes
+    group: infra
+    aliases: [쿠버네티스, k8s, K8s, kubectl]
+
+  - canonical_key: nginx
+    display_name: Nginx
+    group: infra
+    aliases: [엔진엑스, NGINX]
+
+  - canonical_key: tomcat
+    display_name: Tomcat
+    group: infra
+    aliases: [톰캣, Apache Tomcat]
+
+  - canonical_key: linux
+    display_name: Linux
+    group: infra
+    aliases: [리눅스, Ubuntu, CentOS, 우분투]
+
+  # ══════════════════════════════════════
+  # 클라우드 플랫폼
+  # ══════════════════════════════════════
+  - canonical_key: aws
+    display_name: AWS
+    group: cloud
+    aliases: [Amazon Web Services, 아마존 웹 서비스, amazon]
+
+  - canonical_key: gcp
+    display_name: GCP
+    group: cloud
+    aliases: [Google Cloud, 구글 클라우드, Google Cloud Platform]
+
+  - canonical_key: azure
+    display_name: Azure
+    group: cloud
+    aliases: [애저, Microsoft Azure, 마이크로소프트 애저]
+
+  - canonical_key: ncp
+    display_name: NCP
+    group: cloud
+    aliases: [Naver Cloud Platform, 네이버 클라우드, 네이버 클라우드 플랫폼]
+
+  # ══════════════════════════════════════
+  # 클라우드 세부 서비스
+  # ══════════════════════════════════════
+  - canonical_key: ec2
+    display_name: AWS EC2
+    group: cloud_service
+    aliases: [이씨투, Elastic Compute Cloud]
+
+  - canonical_key: s3
+    display_name: AWS S3
+    group: cloud_service
+    aliases: [Simple Storage Service, 에스쓰리]
+
+  - canonical_key: rds
+    display_name: AWS RDS
+    group: cloud_service
+    aliases: [Relational Database Service]
+
+  - canonical_key: lambda
+    display_name: AWS Lambda
+    group: cloud_service
+    aliases: [람다, Lambda 함수]
+
+  - canonical_key: ecs
+    display_name: AWS ECS
+    group: cloud_service
+    aliases: [Elastic Container Service]
+
+  - canonical_key: ecr
+    display_name: AWS ECR
+    group: cloud_service
+    aliases: [Elastic Container Registry]
+
+  - canonical_key: elb
+    display_name: AWS ELB
+    group: cloud_service
+    aliases: [ALB, NLB, Elastic Load Balancer, Application Load Balancer]
+
+  - canonical_key: cloudwatch
+    display_name: AWS CloudWatch
+    group: cloud_service
+    aliases: [클라우드워치]
+
+  - canonical_key: ssm
+    display_name: AWS SSM
+    group: cloud_service
+    aliases: [Systems Manager, Parameter Store]
+
+  - canonical_key: route53
+    display_name: AWS Route 53
+    group: cloud_service
+    aliases: [라우트53]
+
+  - canonical_key: elasticache
+    display_name: AWS ElastiCache
+    group: cloud_service
+    aliases: [엘라스티캐시]
+
+  # ══════════════════════════════════════
+  # 배포/자동화
+  # ══════════════════════════════════════
+  - canonical_key: github_actions
+    display_name: GitHub Actions
+    group: cicd
+    aliases: [깃허브 액션, GHA, github-actions]
+
+  - canonical_key: jenkins
+    display_name: Jenkins
+    group: cicd
+    aliases: [젠킨스]
+
+  - canonical_key: argocd
+    display_name: ArgoCD
+    group: cicd
+    aliases: [아르고CD, Argo CD]
+
+  - canonical_key: gitlab_ci
+    display_name: GitLab CI/CD
+    group: cicd
+    aliases: [깃랩 CI, gitlab-ci]
+
+  - canonical_key: terraform
+    display_name: Terraform
+    group: cicd
+    aliases: [테라폼, IaC]
+
+  - canonical_key: ansible
+    display_name: Ansible
+    group: cicd
+    aliases: [앤서블]
+
+  # ══════════════════════════════════════
+  # 로깅/모니터링/트레이싱
+  # ══════════════════════════════════════
+  - canonical_key: prometheus
+    display_name: Prometheus
+    group: observability
+    aliases: [프로메테우스]
+
+  - canonical_key: grafana
+    display_name: Grafana
+    group: observability
+    aliases: [그라파나]
+
+  - canonical_key: elk
+    display_name: ELK Stack
+    group: observability
+    aliases: [Elasticsearch + Logstash + Kibana, 엘크, ELK]
+
+  - canonical_key: sentry
+    display_name: Sentry
+    group: observability
+    aliases: [센트리]
+
+  - canonical_key: datadog
+    display_name: Datadog
+    group: observability
+    aliases: [데이터독]
+
+  - canonical_key: logback
+    display_name: Logback
+    group: observability
+    aliases: [로그백, SLF4J]
+
+  - canonical_key: zipkin
+    display_name: Zipkin
+    group: observability
+    aliases: [집킨, Spring Cloud Sleuth]
+
+  - canonical_key: jaeger
+    display_name: Jaeger
+    group: observability
+    aliases: [예거]
+
+  # ══════════════════════════════════════
+  # 테스트 도구
+  # ══════════════════════════════════════
+  - canonical_key: junit
+    display_name: JUnit
+    group: testing
+    aliases: [junit5, JUnit5, JUnit 5]
+
+  - canonical_key: mockito
+    display_name: Mockito
+    group: testing
+    aliases: [모키토]
+
+  - canonical_key: pytest
+    display_name: pytest
+    group: testing
+    aliases: [파이테스트, py.test]
+
+  - canonical_key: jest
+    display_name: Jest
+    group: testing
+    aliases: [제스트]
+
+  - canonical_key: jmeter
+    display_name: JMeter
+    group: testing
+    aliases: [제이미터, Apache JMeter]
+
+  - canonical_key: k6
+    display_name: k6
+    group: testing
+    aliases: [케이식스, Grafana k6]
+
+  - canonical_key: ngrinder
+    display_name: nGrinder
+    group: testing
+    aliases: [엔그라인더]
+
+  - canonical_key: testcontainers
+    display_name: Testcontainers
+    group: testing
+    aliases: [테스트컨테이너]
+
+  - canonical_key: restassured
+    display_name: REST Assured
+    group: testing
+    aliases: [레스트어슈어드, rest-assured]

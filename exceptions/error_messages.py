@@ -29,6 +29,8 @@ class ErrorMessage(str, Enum):
 
     #질문 생성 관련 
     QUESTION_GENERATION_FAILED = "question_generation_failed"
+    QUESTION_POOL_EMPTY = "question_pool_empty"
+    ANALYSIS_SAVE_FAILED = "analysis_save_failed"
 
     # LLM 관련
     LLM_SERVICE_UNAVAILABLE = "llm_service_unavailable"
@@ -65,10 +67,10 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.S3_ACCESS_FORBIDDEN: 403,
     ErrorMessage.AUDIO_DOWNLOAD_FAILED: 403,
 
-
     # 404 Not Found
     ErrorMessage.AUDIO_NOT_FOUND: 404,
     ErrorMessage.TTS_VOICE_NOT_FOUND: 404,
+    ErrorMessage.QUESTION_POOL_EMPTY: 404,
 
     # 408 Request Timeout
     ErrorMessage.AUDIO_DOWNLOAD_TIMEOUT: 408,
@@ -94,6 +96,7 @@ ERROR_STATUS_CODE: dict[ErrorMessage, int] = {
     ErrorMessage.RUBRIC_EVALUATION_FAILED: 500,
     ErrorMessage.INTERNAL_SERVER_ERROR: 500,
     ErrorMessage.QUESTION_GENERATION_FAILED: 500,
+    ErrorMessage.ANALYSIS_SAVE_FAILED: 500,
     
 
     # 502 Bad Gateway

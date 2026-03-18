@@ -1,93 +1,100 @@
+# graphs/nodes/rubric_evaluator.py
+
+"""연습모드 루브릭 평가 노드
+
+연습모드에서만 사용. LLM이 직접 루브릭 점수를 산출한다.
+실전모드는 services/rubric_scorer.py (rule-based)가 담당.
+
+질문 유형별 다른 스키마와 프롬프트를 사용:
+    - CS: CSRubricScores (correctness, completeness, reasoning, depth, delivery)
+    - (시스템디자인: 현재 미지원)
+"""
+
 from graphs.feedback.state import FeedbackGraphState
-from schemas.feedback import RubricEvaluationResult
-from prompts.rubric import get_rubric_system_prompt, build_rubric_prompt
+from schemas.feedback import QuestionType
+from schemas.feedback_v2 import CSRubricScores
+from prompts.CS.rubric import (
+    get_rubric_system_prompt,
+    build_rubric_prompt,
+)
 from core.dependencies import get_llm_provider
 from core.logging import get_logger
 from langfuse import observe
 
 logger = get_logger(__name__)
 
-RUBRIC_DIMS = ["accuracy", "logic", "specificity", "completeness", "delivery"]
-
-# Provider별 조건부 calibration 규칙
-# threshold: 이 점수 이하일 때만 +1 보정 적용 (정수 점수의 과소채점 보정)
-#   - 높은 threshold(4) → 대부분의 점수에 +1 (심한 과소채점 차원용)
-#   - 낮은 threshold(3) → 낮은 점수에만 +1 (약한 과소채점, 과대보정 방지)
-CALIBRATION_RULES: dict[str, dict[str, int]] = {
-    "vllm": {
-        "accuracy": 3,
-        "logic": 3,
-        "specificity": 2,
-        "completeness": 2,
-        "delivery": 3,
-    },
-}
-
-
-def _calibrate(
-    result: RubricEvaluationResult,
-    provider: str,
-) -> RubricEvaluationResult:
-    """Post-hoc calibration: provider별 채점 편향을 조건부로 보정한다.
-
-    raw_score ≤ threshold인 경우에만 +1을 적용하고 [1, 5] 범위로 clamp.
-    이미 높은 점수(threshold 초과)는 변경하지 않아 과대보정을 방지한다.
-    """
-    rules = CALIBRATION_RULES.get(provider)
-    if not rules:
-        return result
-
-    calibrated: dict[str, int] = {}
-    for dim in RUBRIC_DIMS:
-        raw = getattr(result, dim)
-        threshold = rules.get(dim, 0)
-        calibrated[dim] = min(5, raw + 1) if raw <= threshold else raw
-
-    logger.debug(
-        f"calibration applied | provider={provider} | "
-        + " ".join(f"{d}:{getattr(result, d)}→{calibrated[d]}" for d in RUBRIC_DIMS)
-    )
-    return result.model_copy(update=calibrated)
-
 
 @observe(name="rubric_evaluator", as_type="generation")
 async def rubric_evaluator(state: FeedbackGraphState) -> dict:
-    """루브릭 기반 평가 노드"""
-    logger.debug(f"rubric evaluator start | interview_type={state['interview_type']}")
+    """연습모드 루브릭 평가 노드
+
+    question_type에 따라 다른 스키마와 프롬프트로 LLM 채점.
+
+    Returns:
+        dict: rubric_result + current_step
+    """
+
+    question_type = state["question_type"]
+
+    logger.debug(
+        f"Practice rubric evaluator start | "
+        f"question_type={question_type.value}"
+    )
 
     llm = get_llm_provider("gemini")
 
-    # 토픽별 카테고리 정보 추출
-    categories_in_session = list(set(
-        turn.category.value for turn in state["interview_history"] 
-        if turn.category and turn.turn_type == "main"
-    ))
-    
+    # 면접 텍스트 구성
     interview_text = "\n\n".join(
         f"Q: {turn.question}\nA: {turn.answer_text}"
         for turn in state["interview_history"]
     )
-    
-    system_prompt = get_rubric_system_prompt(llm.provider_name)
-    user_prompt = build_rubric_prompt(
-        question_type=state["question_type"],
-        categories=categories_in_session,
-        interview_text=interview_text,
-    )
-    
-    logger.debug(f"LLM call | provider={llm.provider_name}")
-    
-    # LLM 호출 - 실패 시 AppException(LLM_XXX) 발생
+
+    # 카테고리 추출
+    categories = list(set(
+        turn.category.value
+        for turn in state["interview_history"]
+        if turn.category
+    ))
+
+    # question_type별 프롬프트 + 스키마 선택
+    if question_type == QuestionType.CS:
+        system_prompt = get_rubric_system_prompt(question_type)
+        user_prompt = build_rubric_prompt(
+            question_type=question_type,
+            categories=categories,
+            interview_text=interview_text,
+        )
+        response_model = CSRubricScores
+
+    else:
+        # 미지원 유형은 CS로 fallback
+        logger.warning(
+            f"Unsupported question_type={question_type.value} "
+            f"for rubric evaluation, falling back to CS"
+        )
+        system_prompt = get_rubric_system_prompt(QuestionType.CS)
+        user_prompt = build_rubric_prompt(
+            question_type=QuestionType.CS,
+            categories=categories,
+            interview_text=interview_text,
+        )
+        response_model = CSRubricScores
+
+    # LLM 호출
     result = await llm.generate_structured(
         prompt=user_prompt,
-        response_model=RubricEvaluationResult,
+        response_model=response_model,
         system_prompt=system_prompt,
         temperature=0.3,
         max_tokens=2000,
     )
 
-    result = _calibrate(result, llm.provider_name)
-    logger.info("Rubric evaluate completed")
+    logger.info(
+        f"Rubric evaluated | "
+        f"question_type={question_type.value} | "
+        f"scores: correctness={result.correctness} completeness={result.completeness} "
+        f"reasoning={result.reasoning} depth={result.depth} delivery={result.delivery}"
+    )
 
     return {
         "rubric_result": result,

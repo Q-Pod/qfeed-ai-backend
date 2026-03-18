@@ -1,79 +1,77 @@
 # graphs/question/question_graph.py
 
-"""질문 생성 그래프 정의"""
-from langgraph.graph import StateGraph, END
+"""질문 생성 그래프 팩토리
+
+question_type에 따라 적절한 카테고리별 그래프를 선택하여 실행한다.
+각 카테고리별 그래프는 별도 모듈에서 정의한다.
+
+- CS:           cs_question_graph.py
+- PORTFOLIO:    portfolio_question_graph.py  (TODO)
+- SYSTEM_DESIGN: system_design_question_graph.py  (TODO)
+"""
+
 from langfuse import observe
 
 from graphs.question.state import QuestionState
-from graphs.nodes.question_router import question_router, get_route_decision
-from graphs.nodes.follow_up_generator import follow_up_generator
-from graphs.nodes.new_topic_generator import new_topic_generator
-from graphs.nodes.session_terminator import session_terminator
-from schemas.question import RouteDecision
-
+from graphs.question.cs_question_graph import get_cs_question_graph
+from graphs.question.pf_question_graph import get_pf_question_graph
+from schemas.feedback import QuestionType
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 from core.logging import get_logger
 
 logger = get_logger(__name__)
 
+def _get_graph_for_question_type(question_type: QuestionType):
+    """question_type에 맞는 컴파일된 그래프를 반환한다."""
 
-def build_question_graph() -> StateGraph:
-    """질문 생성 그래프 빌드"""
-    
-    graph = StateGraph(QuestionState)
-    
-    # 노드 등록
-    graph.add_node("router", question_router)
-    graph.add_node("follow_up_generator", follow_up_generator)
-    graph.add_node("new_topic_generator", new_topic_generator)
-    graph.add_node("session_terminator", session_terminator)
+    if question_type == QuestionType.CS:
+        return get_cs_question_graph()
 
-    # 엣지 연결
-    graph.set_entry_point("router")
-    
-    graph.add_conditional_edges(
-        "router",
-        get_route_decision,
-        {
-            RouteDecision.FOLLOW_UP.value: "follow_up_generator",
-            RouteDecision.NEW_TOPIC.value: "new_topic_generator",
-            RouteDecision.END_SESSION.value: "session_terminator",
-        },
-    )
-    
-    graph.add_edge("follow_up_generator", END)
-    graph.add_edge("new_topic_generator", END)
-    graph.add_edge("session_terminator", END)
-    
-    compiled_graph = graph.compile()
-    
-    logger.info("Question generation graph compiled successfully")
-    
-    return compiled_graph
+    elif question_type == QuestionType.PORTFOLIO:
+        return get_pf_question_graph()
 
+    # TODO: 시스템 디자인 그래프 구현 후 활성화
+    # elif question_type == QuestionType.SYSTEM_DESIGN:
+    #     return get_system_design_question_graph()
 
-# 싱글톤 그래프 인스턴스
-_question_graph = None
+    else:
+        # 아직 구현되지 않은 question_type은 기존 범용 그래프로 fallback
+        # 기존 범용 그래프도 없으면 CS 그래프를 사용 (임시)
+        logger.warning(
+            f"No dedicated graph for question_type={question_type.value}, "
+            f"falling back to CS graph"
+        )
+        return get_cs_question_graph()
 
-
-def get_question_graph() -> StateGraph:
-    """컴파일된 그래프 인스턴스 반환 (싱글톤)"""
-    global _question_graph
-    if _question_graph is None:
-        _question_graph = build_question_graph()
-    return _question_graph
 
 @observe(name="question_pipeline")
 async def run_question_pipeline(initial_state: QuestionState) -> dict:
-    """질문 생성 파이프라인 실행 """
-    graph = get_question_graph()
-    try: 
+    """질문 생성 파이프라인 실행
+
+    question_type에 따라 적절한 그래프를 선택하고 실행한다.
+    서비스 레이어는 이 함수만 호출하면 된다.
+    """
+    question_type = initial_state["question_type"]
+    graph = _get_graph_for_question_type(question_type)
+
+    logger.info(
+        f"Running question pipeline | "
+        f"question_type={question_type.value} | "
+        f"graph={type(graph).__name__}"
+    )
+
+    try:
         result = await graph.ainvoke(initial_state)
         return result
     except AppException:
         raise
     except Exception as e:
         logger.error(f"question generate graph failed | {type(e).__name__}: {e}")
-        raise AppException(ErrorMessage.FEEDBACK_GENERATION_FAILED) from e
+        raise AppException(ErrorMessage.QUESTION_GENERATION_FAILED) from e
+
+
+
+
+
 

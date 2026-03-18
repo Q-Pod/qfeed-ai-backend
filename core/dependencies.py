@@ -28,10 +28,11 @@ def get_llm_provider(provider: str | None = None) -> LLMProvider:
                 model=settings.GEMINI_LITE_MODEL_ID,
                 thinking_budget=0,
             )
+        elif provider_name == "gemini":
+            _llm_cache[provider_name] = GeminiProvider(thinking_budget=0)
         else:
             _llm_cache[provider_name] = GeminiProvider(thinking_budget=1024)
     return _llm_cache[provider_name]
-
 
 def get_stt_provider(provider: str | None = None) -> STTProvider:
     provider_name = provider or settings.STT_PROVIDER

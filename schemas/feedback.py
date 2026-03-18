@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from typing import Literal, Union
 from schemas.common import BaseResponse
+from schemas.pf_question_pools import TechAspectPair
 
 class InterviewType(str, Enum):
     PRACTICE_INTERVIEW = "PRACTICE_INTERVIEW" # 연습모드
@@ -30,17 +31,17 @@ class SystemDesignCategory(str, Enum):
     PLATFORM = "PLATFORM"
     TRANSACTION = "TRANSACTION"
 
+class PortfolioCategory(str, Enum):
+    PORTFOLIO = "PORTFOLIO"  # 단일 값
 
-# Union 타입 (필요한 곳에서 사용)
-QuestionCategory = Union[CSCategory, SystemDesignCategory]
+QuestionCategory = Union[CSCategory, SystemDesignCategory, PortfolioCategory]
 
 # 헬퍼 함수
-def get_category_enum(question_type: QuestionType) -> type[CSCategory] | type[SystemDesignCategory] | None:
-    """QuestionType에 해당하는 Category Enum 클래스 반환"""
+def get_category_enum(question_type: QuestionType) -> type[CSCategory] | type[SystemDesignCategory] | type[PortfolioCategory] | None:
     mapping = {
         QuestionType.CS: CSCategory,
         QuestionType.SYSTEM_DESIGN: SystemDesignCategory,
-        QuestionType.PORTFOLIO: None,
+        QuestionType.PORTFOLIO: PortfolioCategory,
     }
     return mapping.get(question_type)
 
@@ -178,7 +179,24 @@ class RubricEvaluationResult(BaseModel):
 
 class QATurn(BaseModel):
     question: str = Field(..., description="질문 텍스트")
-    category: QuestionCategory = Field(..., description="문제 카테고리")
+    question_id: int | None = Field(None, description="질문 id")
+    category: QuestionCategory = Field(..., description="문제 커테고리") # 포토폴리오의 경우 PORTFOLIO로 보내기
+    subcategory: str | None = Field(
+        None,
+        description="문제 소분류 ID (CS taxonomy subcategory)"
+    )
+    tech_tags: list[str] = Field(
+        default_factory=list,
+        description="포트폴리오 질문의 기술 태그",
+    )
+    aspect_tags: list[str] = Field(
+        default_factory=list,
+        description="포트폴리오 질문의 관점 태그",
+    )
+    tech_aspect_pairs: list[TechAspectPair] = Field(
+        default_factory=list,
+        description="포트폴리오 질문의 기술-관점 pair",
+    )
     answer_text: str = Field(..., description="답변 텍스트")
     turn_type: Literal["new_topic", "follow_up"] = Field(..., description="질문 유형")
     turn_order: int = Field(..., description="전체 세션 내 순서 (0부터)")
@@ -277,59 +295,3 @@ class FeedbackResponse(BaseResponse[FeedbackData]):
                 overall_feedback = overall_feedback
             ),
         )
-
-# V2 비동기 처리 도입 시 사용
-
-# class FeedbackAcceptedResponse(BaseResponse):
-#     """V2 즉시 응답 - 비동기 처리 시작 알림
-
-#     /ai/interview/feedback/request 호출 시 즉시 반환
-#     """
-#     message: Literal["feedback_generate"] = "feedback_generate"
-#     data: None = None
-
-# Callback Payload
-# class FeedbackCallbackPayload(BaseModel):
-#     """
-#     V2 Callback 페이로드 - AI 서버 → Java 백엔드
-    
-#     POST /ai/interview/feedback/generate 로 전송
-    
-#     - Bad case인 경우: bad_case_feedback만 포함, metrics/feedback은 None
-#     - 정상인 경우: metrics, feedback 포함, bad_case_feedback은 None
-#     """
-    
-
-#     @classmethod
-#     def from_bad_case(
-#         cls,
-#         user_id: int,
-#         question_id: int,
-#         bad_case_result: BadCaseResult
-#     ) -> "FeedbackCallbackPayload":
-#         """Bad case 결과로부터 Callback 페이로드 생성"""
-#         return cls(
-#             user_id=user_id,
-#             question_id=question_id,
-#             bad_case_feedback=bad_case_result.bad_case_feedback
-#         )
-
-#     @classmethod
-#     def from_evaluation(
-#         cls,
-#         user_id: int,
-#         question_id: int,
-#         rubric_result: RubricEvaluationResult,
-#         keyword_result: KeywordCheckResult,
-#         feedback: list[FeedbackContent]
-#     ) -> "FeedbackCallbackPayload":
-#         """정상 평가 결과로부터 Callback 페이로드 생성"""
-#         return cls(
-#             user_id=user_id,
-#             question_id=question_id,
-#             metrics=rubric_result.to_metrics_list(),
-#             keyword_result=keyword_result,
-#             feedback=feedback
-#         )
-
-

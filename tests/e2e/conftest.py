@@ -12,6 +12,7 @@ E2E 테스트는 실제 서버를 띄운 상태에서 실행합니다.
 """
 
 import pytest
+import asyncio
 import os
 import httpx
 from pathlib import Path
@@ -35,6 +36,44 @@ if _env_file.exists():
 
 # 테스트 대상 서버 URL (환경변수로 오버라이드 가능)
 BASE_URL = os.getenv("E2E_BASE_URL", "http://localhost:8000")
+
+# 서버 살아있는지 확인할 때 쓰는 타임아웃(초). 느린 환경이면 늘리면 됨.
+E2E_SERVER_CHECK_TIMEOUT = float(os.getenv("E2E_SERVER_CHECK_TIMEOUT", "10.0"))
+
+
+# ============================================
+# 이벤트 루프 (in-process E2E용)
+# ============================================
+# test_full_pipeline_via_service 등 서비스를 직접 호출하는 테스트는
+# 캐시된 LLM(Gemini)을 쓰는데, 루프가 test마다 바뀌면 "Event loop is closed" 발생.
+# session-scoped 루프를 명시해 한 세션 동안 동일 루프를 쓰도록 함.
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """세션 전체에서 하나의 이벤트 루프 사용 (캐시된 Gemini 등 async 클라이언트 호환)"""
+    loop = asyncio.new_event_loop()
+    yield loop
+    # Gemini/httpx 등이 연결 정리(aclose)를 끝낼 시간을 주고 나서 close.
+    # 그렇지 않으면 "Event loop is closed"로 정리 단계에서 실패할 수 있음.
+    try:
+        loop.run_until_complete(asyncio.sleep(0.25))
+    except Exception:
+        pass
+    loop.close()
+
+
+@pytest.fixture
+def fresh_llm_for_inprocess():
+    """
+    서비스를 직접 호출하는 in-process 테스트용.
+    테스트 직전에 LLM 캐시를 비우면, 이 테스트가 돌아가는 루프에서 새 provider가 생성되어
+    'Event loop is closed' 가능성을 줄임.
+    """
+    from core import dependencies
+    dependencies._llm_cache.clear()
+    yield
+    dependencies._llm_cache.clear()
 
 
 # ============================================
@@ -62,13 +101,14 @@ def e2e_client(base_url):
 def check_server_running(base_url):
     """서버가 실행 중인지 확인"""
     try:
-        response = httpx.get(f"{base_url}/ai", timeout=5.0)
+        response = httpx.get(f"{base_url}/ai", timeout=E2E_SERVER_CHECK_TIMEOUT)
         if response.status_code != 200:
             pytest.skip(f"Server not responding properly at {base_url}")
-    except httpx.ConnectError:
+    except (httpx.ConnectError, httpx.ReadTimeout) as e:
         pytest.skip(
-            f"Server not running at {base_url}. "
-            f"Start server first: uv run uvicorn main:app --port 8000"
+            f"Server not reachable at {base_url} ({type(e).__name__}). "
+            f"Start server first: uv run uvicorn main:app --port 8000. "
+            f"Slow env? Set E2E_SERVER_CHECK_TIMEOUT (current: {E2E_SERVER_CHECK_TIMEOUT}s)"
         )
 
 

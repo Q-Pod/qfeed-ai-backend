@@ -21,6 +21,7 @@ from schemas.feedback import(
     TopicFeedback,
     OverallFeedback
 )
+from schemas.feedback_v2 import RouterAnalysisTurn
 
 class FeedbackGraphState(TypedDict):
     """
@@ -49,6 +50,9 @@ class FeedbackGraphState(TypedDict):
 
     #RubricEvaluator 노드 출력
     rubric_result : RubricEvaluationResult | None
+
+    # PracticeAnswerAnalyzer 노드 출력
+    router_analyses: list[RouterAnalysisTurn] | None
 
     #FeedbackGenerator 노드 출력
     topics_feedback : TopicFeedback | None
@@ -92,6 +96,7 @@ def create_initial_state(
         bad_case_result=None,
         keyword_result=None,
         rubric_result=None,
+        router_analyses=None,
         topics_feedback=None,
         overall_feedback=None,
         

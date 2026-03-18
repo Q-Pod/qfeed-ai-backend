@@ -1,0 +1,293 @@
+# Winenu CS 면접 질문 카테고리 분류 체계
+# 용도: 질문 생성 시 LLM 태깅, 취약점 프로파일 집계, 추천 로직
+# 구조: 대분류(category) > 소분류(subcategory) 2-depth 트리
+
+categories:
+  # ══════════════════════════════════════
+  # 운영체제
+  # ══════════════════════════════════════
+  - id: OS
+    name: 운영체제
+    subcategories:
+      - id: process_thread
+        name: 프로세스 / 스레드
+        keywords: [프로세스, 스레드, 멀티프로세스, 멀티스레드, PCB, TCB, IPC]
+        example_question: 프로세스와 스레드의 차이는?
+
+      - id: scheduling_context_switch
+        name: 스케줄링 / 컨텍스트 스위칭
+        keywords: [스케줄링, 컨텍스트 스위칭, RR, SJF, MLFQ, 선점, 비선점]
+        example_question: 컨텍스트 스위칭 비용이 큰 이유는?
+
+      - id: synchronization
+        name: 동기화
+        keywords:
+          [동기화, mutex, semaphore, 뮤텍스, 세마포어, 임계영역, 경쟁조건]
+        example_question: mutex와 semaphore의 차이는?
+
+      - id: deadlock
+        name: 데드락
+        keywords: [데드락, 교착상태, 상호배제, 점유대기, 비선점, 순환대기]
+        example_question: 데드락의 발생 조건 4가지는?
+
+      - id: memory_management
+        name: 메모리 관리
+        keywords: [메모리, 페이징, 세그멘테이션, 내부단편화, 외부단편화, 스와핑]
+        example_question: 페이징과 세그멘테이션 차이는?
+
+      - id: virtual_memory
+        name: 가상 메모리
+        keywords:
+          [가상 메모리, 페이지 폴트, 페이지 테이블, TLB, 스레싱, 페이지 교체]
+        example_question: 페이지 폴트가 발생하면 무슨 일이 일어나는가?
+
+      - id: system_call_kernel
+        name: 시스템 콜 / 커널 모드
+        keywords: [시스템 콜, 커널 모드, 유저 모드, 트랩, 인터럽트]
+        example_question: 시스템 콜은 왜 필요한가?
+
+      - id: file_system_io
+        name: 파일시스템 / I/O
+        keywords:
+          [파일시스템, I/O, 버퍼 캐시, 페이지 캐시, inode, 디스크 스케줄링]
+        example_question: 버퍼 캐시와 페이지 캐시 차이는?
+
+  # ══════════════════════════════════════
+  # 네트워크
+  # ══════════════════════════════════════
+  - id: NETWORK
+    name: 네트워크
+    subcategories:
+      - id: network_basics
+        name: 네트워크 기초 / OSI / TCP-IP
+        keywords: [OSI, TCP/IP, 7계층, 4계층, 캡슐화, 프로토콜 스택]
+        example_question: OSI 7계층과 TCP/IP 차이는?
+
+      - id: tcp_udp
+        name: TCP / UDP
+        keywords: [TCP, UDP, 3-way handshake, 4-way handshake, 신뢰성, 비연결]
+        example_question: TCP와 UDP는 언제 각각 쓰는가?
+
+      - id: flow_congestion
+        name: 흐름 제어 / 혼잡 제어
+        keywords: [흐름 제어, 혼잡 제어, 슬라이딩 윈도우, slow start, AIMD]
+        example_question: TCP 혼잡 제어는 어떻게 동작하는가?
+
+      - id: http_https
+        name: HTTP / HTTPS
+        keywords: [HTTP, HTTPS, TLS, SSL, 상태코드, 메서드, 헤더, 쿠키, 세션]
+        example_question: HTTP와 HTTPS 차이와 HTTPS 동작 원리는?
+
+      - id: dns
+        name: DNS
+        keywords: [DNS, 도메인, 네임서버, 재귀적 질의, 반복적 질의, DNS 캐시]
+        example_question: DNS 조회 과정은 어떻게 되는가?
+
+      - id: socket_connection
+        name: 소켓 / 연결 관리
+        keywords: [소켓, 연결, 바인딩, 리스닝, accept, TCP 소켓]
+        example_question: 소켓이란 무엇이고 서버는 어떻게 연결을 처리하는가?
+
+      - id: load_balancing_proxy
+        name: 로드밸런싱 / 프록시
+        keywords: [로드밸런서, L4, L7, 리버스 프록시, 포워드 프록시, HAProxy]
+        example_question: L4와 L7 로드밸런서 차이는?
+
+      - id: rest_rpc
+        name: REST / RPC / gRPC
+        keywords: [REST, RESTful, RPC, gRPC, Protocol Buffers, API 설계]
+        example_question: REST와 gRPC의 차이는?
+
+      - id: websocket_realtime
+        name: WebSocket / 실시간 통신
+        keywords: [WebSocket, 실시간, 양방향, polling, SSE, STOMP]
+        example_question: WebSocket은 왜 필요한가?
+
+  # ══════════════════════════════════════
+  # 데이터베이스
+  # ══════════════════════════════════════
+  - id: DB
+    name: 데이터베이스
+    subcategories:
+      - id: relational_modeling
+        name: 관계형 모델링 / 정규화
+        keywords: [정규화, 반정규화, ERD, 1NF, 2NF, 3NF, BCNF, 관계형 모델]
+        example_question: 정규화는 왜 필요한가?
+
+      - id: sql_query
+        name: SQL / 기본 쿼리
+        keywords: [SQL, SELECT, JOIN, 서브쿼리, GROUP BY, HAVING, UNION]
+        example_question: JOIN의 종류와 차이는?
+
+      - id: index
+        name: 인덱스
+        keywords:
+          [인덱스, B-Tree, B+Tree, 클러스터 인덱스, 커버링 인덱스, 복합 인덱스]
+        example_question: 인덱스가 항상 성능을 높이는가?
+
+      - id: execution_plan_optimization
+        name: 실행계획 / 쿼리 최적화
+        keywords: [실행계획, EXPLAIN, 옵티마이저, 풀 테이블 스캔, 인덱스 스캔]
+        example_question: 인덱스를 탔는데도 느릴 수 있는 이유는?
+
+      - id: transaction
+        name: 트랜잭션
+        keywords: [트랜잭션, ACID, 원자성, 일관성, 격리성, 지속성, 커밋, 롤백]
+        example_question: 트랜잭션의 ACID는 무엇인가?
+
+      - id: lock_mvcc
+        name: 락 / MVCC / 동시성 제어
+        keywords: [락, MVCC, 공유락, 배타락, 낙관적, 비관적, 동시성 제어]
+        example_question: MVCC는 왜 필요한가?
+
+      - id: isolation_consistency
+        name: 격리수준 / 일관성
+        keywords:
+          [
+            격리수준,
+            Read Uncommitted,
+            Read Committed,
+            Repeatable Read,
+            Serializable,
+            팬텀 리드,
+          ]
+        example_question: Repeatable Read와 Serializable 차이는?
+
+      - id: nosql
+        name: NoSQL
+        keywords: [NoSQL, 문서DB, 키-값, 컬럼패밀리, 그래프DB, CAP, BASE]
+        example_question: RDB와 NoSQL은 언제 다르게 선택하는가?
+
+      - id: replication_sharding
+        name: 복제 / 샤딩 / 분산 저장
+        keywords: [복제, 샤딩, 레플리카, 파티셔닝, 마스터-슬레이브, 분산 DB]
+        example_question: Replication과 Sharding 차이는?
+
+      - id: caching_db
+        name: 캐시 / DB 성능
+        keywords:
+          [캐시, 캐싱, look-aside, write-through, write-back, 캐시 무효화, TTL]
+        example_question: DB 앞단 캐시는 어떤 문제를 만들 수 있는가?
+
+  # ══════════════════════════════════════
+  # 자료구조 / 알고리즘
+  # ══════════════════════════════════════
+  - id: DATA_STRUCTURE_ALGORITHM
+    name: 자료구조 / 알고리즘
+    subcategories:
+      - id: linear_structure
+        name: 배열 / 연결리스트 / 스택 / 큐
+        keywords:
+          [배열, 연결리스트, 스택, 큐, 덱, 원형큐, ArrayList, LinkedList]
+        example_question: 배열과 연결리스트 차이는?
+
+      - id: tree_heap
+        name: 트리 / 힙
+        keywords: [트리, 이진트리, BST, 힙, AVL, 레드블랙트리, 우선순위 큐]
+        example_question: 힙과 BST 차이는?
+
+      - id: graph
+        name: 그래프
+        keywords: [그래프, BFS, DFS, 인접행렬, 인접리스트, 다익스트라, 위상정렬]
+        example_question: BFS와 DFS 차이는?
+
+      - id: hash
+        name: 해시
+        keywords: [해시, 해시맵, 해시테이블, 해시 충돌, 체이닝, 개방주소법]
+        example_question: 해시 충돌은 어떻게 해결하는가?
+
+      - id: sorting
+        name: 정렬
+        keywords: [정렬, 퀵소트, 머지소트, 힙소트, 버블소트, 삽입정렬, 안정정렬]
+        example_question: 퀵소트와 머지소트 차이는?
+
+      - id: search
+        name: 탐색 / 이진탐색
+        keywords: [탐색, 이진탐색, 선형탐색, lower bound, upper bound]
+        example_question: 이진탐색의 전제 조건은?
+
+      - id: dynamic_programming
+        name: DP
+        keywords:
+          [
+            DP,
+            동적프로그래밍,
+            메모이제이션,
+            타뷸레이션,
+            최적 부분 구조,
+            중복 부분 문제,
+          ]
+        example_question: DP와 그리디 차이는?
+
+      - id: greedy
+        name: 그리디
+        keywords: [그리디, 탐욕, 최적해, 활동 선택, 허프만]
+        example_question: 그리디가 항상 최적해를 보장하지 않는 이유는?
+
+      - id: recursion_backtracking
+        name: 재귀 / 백트래킹
+        keywords: [재귀, 백트래킹, 콜스택, 꼬리재귀, 가지치기]
+        example_question: 재귀와 반복문의 trade-off는?
+
+      - id: complexity_analysis
+        name: 시간복잡도 / 공간복잡도
+        keywords:
+          [
+            시간복잡도,
+            공간복잡도,
+            Big-O,
+            Big-Theta,
+            Big-Omega,
+            최선,
+            최악,
+            평균,
+          ]
+        example_question: Big-O, Big-Theta, Big-Omega 차이는?
+
+  # ══════════════════════════════════════
+  # 컴퓨터 구조
+  # ══════════════════════════════════════
+  - id: COMPUTER_ARCHITECTURE
+    name: 컴퓨터 구조
+    subcategories:
+      - id: cpu_execution
+        name: CPU 동작 원리
+        keywords: [CPU, ALU, 레지스터, 명령어 사이클, fetch, decode, execute]
+        example_question: CPU는 명령어를 어떻게 처리하는가?
+
+      - id: memory_hierarchy
+        name: 메모리 계층
+        keywords: [메모리 계층, 레지스터, L1, L2, L3, DRAM, SSD, HDD]
+        example_question: 레지스터, 캐시, 메모리 차이는?
+
+      - id: cache_locality
+        name: 캐시 / 지역성
+        keywords:
+          [캐시, 지역성, 시간적 지역성, 공간적 지역성, 캐시 히트, 캐시 미스]
+        example_question: 캐시 지역성이 왜 중요한가?
+
+      - id: pipelining_parallelism
+        name: 파이프라이닝 / 병렬성
+        keywords:
+          [파이프라이닝, 파이프라인, 해저드, 데이터 해저드, 분기 예측, ILP]
+        example_question: 파이프라이닝이 성능을 높이는 이유는?
+
+      - id: interrupt_dma
+        name: 인터럽트 / DMA
+        keywords: [인터럽트, DMA, 폴링, 인터럽트 벡터, ISR]
+        example_question: 인터럽트와 폴링 차이는?
+
+      - id: mode_privilege
+        name: 사용자 모드 / 커널 모드
+        keywords: [사용자 모드, 커널 모드, 특권 명령, 모드 비트, 보호 링]
+        example_question: 사용자 모드와 커널 모드가 분리되는 이유는?
+
+      - id: multicore_concurrency
+        name: 멀티코어 / 병행성 기초
+        keywords: [멀티코어, 병행성, 병렬성, 암달의 법칙, 캐시 일관성, MESI]
+        example_question: 멀티코어 환경에서 왜 동기화가 필요한가?
+
+      - id: binary_data_representation
+        name: 데이터 표현 / 2진수 / 부동소수점
+        keywords: [2진수, 부동소수점, IEEE 754, 보수, 오버플로우, 엔디안]
+        example_question: 부동소수점 오차는 왜 발생하는가?

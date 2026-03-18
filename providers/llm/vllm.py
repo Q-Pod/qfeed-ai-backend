@@ -1,10 +1,10 @@
 # providers/llm/vllm.py
 
 import json
-from typing import Type, TypeVar
+from typing import Any, Type, TypeVar
 
 import httpx
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from langfuse import observe
 
 from core.config import get_settings
@@ -14,11 +14,20 @@ from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
 
 
-
 T = TypeVar("T", bound=BaseModel)
 settings = get_settings()
 logger = get_logger(__name__)
 metrics_logger = get_metrics_logger()
+
+
+def _get_schema_and_validator(response_model: Any) -> tuple[dict, TypeAdapter]:
+    """response_model에서 JSON schema와 validator를 추출한다.
+
+    BaseModel이든 Union이든 TypeAdapter로 통일 처리한다.
+    """
+    adapter = TypeAdapter(response_model)
+    schema = adapter.json_schema()
+    return schema, adapter
 
 
 class VLLMProvider:
@@ -31,7 +40,7 @@ class VLLMProvider:
         timeout: float = 120.0,
     ):
         self.base_url = base_url or settings.GPU_LLM_URL
-        self.model = model or settings.LLM_MODEL_ID  
+        self.model = model or settings.LLM_MODEL_ID
         self.timeout = timeout
 
     @property
@@ -76,28 +85,29 @@ class VLLMProvider:
     async def generate_structured(
         self,
         prompt: str,
-        response_model: Type[T],
+        response_model: Any,
         *,
         system_prompt: str | None = None,
         temperature: float = 0.3,
         max_tokens: int = 4000,
-    ) -> T:
-        """Structured Output 생성 - vLLM guided_json 사용"""
+    ) -> Any:
+        """Structured Output 생성 - vLLM structured_outputs 사용
+
+        response_model은 BaseModel 서브클래스 또는 Union 타입 모두 지원한다.
+        """
         messages = self._build_messages(prompt, system_prompt)
-        schema = response_model.model_json_schema()
-        task_name = response_model.__name__
+        schema, adapter = _get_schema_and_validator(response_model)
+        task_name = getattr(response_model, "__name__", str(response_model))
 
         payload = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
-            "structured_outputs": {
-                "json": schema
-            }
+            "structured_outputs": {"json": schema},
         }
 
-        result= await self._call_api(payload, task_name)
+        result = await self._call_api(payload, task_name)
 
         usage = result.get("usage", {})
         update_observation(
@@ -112,19 +122,23 @@ class VLLMProvider:
 
         try:
             parsed_data = json.loads(content)
-            result = response_model.model_validate(parsed_data)
+            result = adapter.validate_python(parsed_data)
             logger.debug(f"JSON 파싱 성공 | model={task_name}")
             return result
         except json.JSONDecodeError as e:
-            logger.error(f"JSON 파싱 실패 | model={task_name} | error={e} | content={content[:200]}")
+            logger.error(
+                f"JSON 파싱 실패 | model={task_name} | error={e} | "
+                f"content={content[:200]}"
+            )
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
         except ValidationError as e:
             logger.error(f"Pydantic 검증 실패 | model={task_name} | error={e}")
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
         except Exception as e:
-            logger.error(f"응답 처리 실패 | model={task_name} | {type(e).__name__}: {e}")
+            logger.error(
+                f"응답 처리 실패 | model={task_name} | {type(e).__name__}: {e}"
+            )
             raise AppException(ErrorMessage.LLM_RESPONSE_PARSE_FAILED) from e
-        
 
     async def _call_api(
         self,
@@ -147,7 +161,6 @@ class VLLMProvider:
                 result = response.json()
                 logger.debug(f"vLLM raw response | task={task} | response={result}")
 
-
             logger.debug(f"vLLM API 완료 | task={task}")
 
             return result
@@ -157,15 +170,12 @@ class VLLMProvider:
             raise AppException(ErrorMessage.LLM_TIMEOUT) from e
 
         except httpx.ConnectError as e:
-
             logger.error(f"vLLM 서버 연결 실패 | task={task} | url={url}")
             raise AppException(ErrorMessage.LLM_SERVICE_UNAVAILABLE) from e
 
         except httpx.HTTPStatusError as e:
-
             status_code = e.response.status_code
-            
-            # 에러 응답 파싱 시도
+
             try:
                 error_detail = e.response.json()
             except Exception:
@@ -184,7 +194,9 @@ class VLLMProvider:
             raise AppException(ErrorMessage.LLM_SERVICE_UNAVAILABLE) from e
 
         except Exception as e:
-            logger.error(f"vLLM API 예외 | task={task} | {type(e).__name__}: {e}")
+            logger.error(
+                f"vLLM API 예외 | task={task} | {type(e).__name__}: {e}"
+            )
             raise AppException(ErrorMessage.LLM_SERVICE_UNAVAILABLE) from e
 
     def _build_messages(
@@ -194,18 +206,18 @@ class VLLMProvider:
     ) -> list[dict]:
         """OpenAI 형식의 messages 배열 구성"""
         messages = []
-        
+
         if system_prompt:
             messages.append({
                 "role": "system",
                 "content": system_prompt,
             })
-        
+
         messages.append({
             "role": "user",
             "content": prompt,
         })
-        
+
         return messages
 
     async def health_check(self) -> bool:

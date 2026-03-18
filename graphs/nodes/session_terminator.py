@@ -29,16 +29,31 @@ async def session_terminator(state: QuestionState) -> dict:
     
     # 마지막 turn_type
     last_turn_type = "new_topic"
+    last_category = None
+    last_subcategory = None
+    last_tech_tags: list[str] = []
+    last_aspect_tags: list[str] = []
+    last_tech_aspect_pairs: list = []
     if interview_history:
         last_turn = interview_history[-1]
         last_turn_type = last_turn.turn_type
         last_category = last_turn.category
-    
+        last_subcategory = last_turn.subcategory
+        last_tech_tags = list(getattr(last_turn, "tech_tags", []) or [])
+        last_aspect_tags = list(getattr(last_turn, "aspect_tags", []) or [])
+        last_tech_aspect_pairs = list(
+            getattr(last_turn, "tech_aspect_pairs", []) or []
+        )
+
     generated_question = GeneratedQuestion(
         user_id = user_id,
         session_id = session_id,
         question_text="수고하셨습니다. 준비된 모든 면접 질문이 종료되었습니다.",
         category=last_category,  # 마지막 토픽의 카테고리
+        subcategory=last_subcategory,
+        tech_tags=last_tech_tags,
+        aspect_tags=last_aspect_tags,
+        tech_aspect_pairs=last_tech_aspect_pairs,
         topic_id=current_topic_id,
         turn_type=last_turn_type,
         is_session_ended=True,

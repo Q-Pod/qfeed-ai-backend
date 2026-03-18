@@ -1,0 +1,1234 @@
+[
+  {
+    "id": "FU_CS_OS_01",
+    "description": "CS OS - 멀티프로세싱 vs 멀티스레딩 메인 답변 후 첫 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-01",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "대규모 트래픽을 처리하는 웹 서버를 구축할 때 멀티프로세싱과 멀티스레딩 중 선택한다면, 두 방식의 차이를 메모리 자원 측면에서 설명해 주세요.",
+          "category": "OS",
+          "answer_text": "가장 큰 차이는 메모리 공유 여부입니다. 멀티프로세스는 각 프로세스가 독립 메모리 공간을 가져 안정성이 높지만 컨텍스트 스위칭 비용이 큽니다. 멀티스레딩은 스택만 독립이고 힙·데이터·코드 영역을 공유해 자원 소모가 적고 스위칭이 빠릅니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "OS", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_OS_02",
+    "description": "CS OS - 컨텍스트 스위칭 답변 후 두 번째 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-02",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "멀티프로세싱과 멀티스레딩의 메모리 구조 차이를 설명해 주세요.",
+          "category": "OS",
+          "answer_text": "멀티프로세스는 프로세스마다 독립 메모리, 멀티스레딩은 스레드가 힙·코드를 공유합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "스레드 간 메모리 공유로 효율적이라는 점은 알겠습니다. 컨텍스트 스위칭 관점에서 오버헤드 차이는 어떻게 되나요?",
+          "category": "OS",
+          "answer_text": "스레드 스위칭은 같은 프로세스 내라서 TLB·캐시가 유지될 여지가 있어 프로세스 스위칭보다 오버헤드가 적은 편입니다. 프로세스는 주소 공간이 바뀌어 캐시 플러시 등 비용이 큽니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "OS", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_OS_03",
+    "description": "CS OS - GIL 환경 극복 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-03",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "멀티프로세싱과 멀티스레딩의 차이를 메모리 관점에서 설명해 주세요.",
+          "category": "OS",
+          "answer_text": "메모리 공유 여부와 컨텍스트 스위칭 비용 차이가 있습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "컨텍스트 스위칭 오버헤드 비교에 대해 구체적으로 말씀해 주세요.",
+          "category": "OS",
+          "answer_text": "스레드는 캐시·TLB 관점에서 유리하고, 프로세스는 주소 공간이 바뀌어 비용이 더 큽니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "OS", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_OS_04",
+    "description": "CS OS - 데드락 4가지 조건 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-04",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "교착 상태(Deadlock)가 발생하기 위한 4가지 필수 조건과, 실무에서 회피하는 현실적인 방법은 무엇인가요?",
+          "category": "OS",
+          "answer_text": "상호 배제, 점유 대기, 비선점, 순환 대기 네 가지가 모두 만족될 때 데드락이 발생합니다. 실무에서는 자원 요청 순서를 일관되게 고정해 순환 대기를 끊는 방식을 많이 씁니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "OS", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_OS_05",
+    "description": "CS OS - 락 정렬 원칙 답변 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-05",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "데드락 4가지 조건을 설명해 주세요.",
+          "category": "OS",
+          "answer_text": "상호 배제, 점유 대기, 비선점, 순환 대기입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "DB 트랜잭션에서 여러 레코드에 락을 걸 때 데드락을 방지하는 자원 정렬 원칙은 어떻게 구현하나요?",
+          "category": "OS",
+          "answer_text": "항상 같은 순서로 락을 획득하도록 애플리케이션에서 제어합니다. 예를 들어 레코드 ID 오름차순으로만 락을 잡으면 순환 대기가 생기지 않습니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "OS", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_NETWORK_01",
+    "description": "CS NETWORK - HTTP 상태 코드 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-06",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "RESTful API에서 HTTP 상태 코드를 어떻게 활용하면 좋을까요?",
+          "category": "NETWORK",
+          "answer_text": "200은 성공, 400번대는 클라이언트 오류, 500번대는 서버 오류로 구분해 사용합니다. 리소스 조회 200, 생성 201, 잘못된 요청 400, 인증 401, 권한 403, 없음 404 등으로 일관되게 쓰면 좋습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "NETWORK", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_NETWORK_02",
+    "description": "CS NETWORK - 401 vs 403 답변 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-07",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "HTTP 상태 코드 200, 400, 500번대를 어떻게 구분해 사용하나요?",
+          "category": "NETWORK",
+          "answer_text": "클라이언트와 서버 쪽 오류를 명확히 나누어 전달하는 데 씁니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "401(Unauthorized)과 403(Forbidden)이 발생했을 때 프론트엔드에서는 각각 어떻게 후속 처리해야 할까요?",
+          "category": "NETWORK",
+          "answer_text": "401이면 로그인 페이지로 보내 재인증을 유도하고, 403이면 권한 부족 안내 페이지나 메시지를 보여주면 됩니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "NETWORK", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_NETWORK_03",
+    "description": "CS NETWORK - L4 vs L7 로드밸런서 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-08",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "대용량 트래픽을 처리하는 로드 밸런서에서 L4와 L7 스위치의 차이와 활용 사례를 설명해 주세요.",
+          "category": "NETWORK",
+          "answer_text": "L4는 IP·포트 기반으로 트래픽을 나누고, L7은 HTTP 헤더·URI 등 애플리케이션 계층 정보를 보고 라우팅합니다. L4는 TCP/UDP 부하 분산, L7은 URL·쿠키 기반 라우팅에 적합합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "NETWORK", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_NETWORK_04",
+    "description": "CS NETWORK - HTTPS 비대칭/대칭키 혼합 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-09",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "HTTPS에서 대칭키 교환을 위해 비대칭키(공개키/개인키)를 혼합 사용하는 이유와 과정을 설명해 주세요.",
+          "category": "NETWORK",
+          "answer_text": "비대칭키는 연산 비용이 커서 세션 키 교환에만 쓰고, 실제 데이터는 대칭키로 암호화합니다. 클라이언트가 서버 공개키로 세션 키를 암호화해 보내면 서버만 개인키로 복호화할 수 있습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "NETWORK", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_NETWORK_05",
+    "description": "CS NETWORK - PFS·DH 키 교환 답변 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-10",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "HTTPS의 대칭키·비대칭키 혼합 사용 이유를 설명해 주세요.",
+          "category": "NETWORK",
+          "answer_text": "비대칭키는 연산이 무거워 세션 키 교환에만 쓰고, 본 통신은 대칭키로 합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "서버 개인키가 유출되면 과거 통신이 복호화될 수 있나요? PFS와 디피-헬만 키 교환에 대해 설명해 주세요.",
+          "category": "NETWORK",
+          "answer_text": "PFS는 세션마다 독립적인 임시 키를 쓰므로 한 세션 키가 유출돼도 다른 세션은 안전합니다. 디피-헬만으로 매 세션 임시 키를 교환해 그걸로 대칭 암호화합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "NETWORK", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DB_01",
+    "description": "CS DB - 트랜잭션 격리 수준 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-11",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "트랜잭션 격리 수준에 따라 동시성과 일관성 트레이드오프가 발생합니다. READ COMMITTED와 REPEATABLE READ의 차이를 더티/논리티/팬텀 리드 관점에서 설명해 주세요.",
+          "category": "DB",
+          "answer_text": "READ COMMITTED는 커밋된 데이터만 읽어 더티 리드는 막지만 논리티 리드는 허용됩니다. REPEATABLE READ는 한 트랜잭션 내 동일 쿼리가 같은 스냅샷을 보도록 해 논리티 리드를 막지만 팬텀 리드는 가능합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DB", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DB_02",
+    "description": "CS DB - 정규화와 역정규화 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-12",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "RDBMS에서 정규화의 목적과, 실무에서 역정규화를 선택하는 상황은 언제인가요?",
+          "category": "DB",
+          "answer_text": "정규화는 중복 제거와 무결성 유지가 목적입니다. 역정규화는 조인 비용을 줄이거나 읽기 성능을 올리기 위해 의도적으로 중복을 두는 경우에 선택합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DB", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DB_03",
+    "description": "CS DB - 역정규화 후 데이터 동기화 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-13",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "정규화와 역정규화의 목적을 설명해 주세요.",
+          "category": "DB",
+          "answer_text": "정규화는 중복 제거, 역정규화는 JOIN 비용 절감이나 읽기 성능을 위해 씁니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "역정규화로 중복 데이터가 생겼을 때, 두 테이블 간 불일치를 막기 위해 앱 또는 DB 레벨에서 어떻게 동기화하나요?",
+          "category": "DB",
+          "answer_text": "트리거로 변경 시 반대쪽을 갱신하거나, 이벤트 기반으로 배치성 싱크를 돌리는 방식을 씁니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DB", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DB_04",
+    "description": "CS DB - B-Tree vs B+Tree 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-14",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "B-Tree와 B+Tree의 차이와, RDBMS 인덱스가 B+Tree를 쓰는 이유를 범위 검색 관점에서 설명해 주세요.",
+          "category": "DB",
+          "answer_text": "B+Tree는 리프에만 데이터가 있고 리프가 링크드 리스트로 연결돼 있어 범위 검색 시 순차 스캔이 유리합니다. RDBMS는 범위 쿼리가 많아 B+Tree가 표준처럼 쓰입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DB", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DB_05",
+    "description": "CS DB - 카디널리티와 인덱스 효율 답변 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-15",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "B+Tree 인덱스 구조를 리프 노드 연결성 관점에서 설명해 주세요.",
+          "category": "DB",
+          "answer_text": "리프 노드에만 데이터가 있고 링크드 리스트로 연결되어 범위 검색에 유리합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "인덱스 설계 시 카디널리티의 의미와, 카디널리티가 낮은 컬럼(성별, 상태값)에 인덱스를 걸면 오히려 성능이 나빠지는 이유는 무엇인가요?",
+          "category": "DB",
+          "answer_text": "카디널리티는 값의 다양성입니다. 낮으면 인덱스 스캔 후 랜덤 I/O가 많아져 오히려 풀 스캔보다 비효율적일 수 있습니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DB", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DSA_01",
+    "description": "CS DSA - heapq Top-K 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-16",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "대용량 데이터 스트림에서 실시간으로 상위 K개 요소를 추출할 때, 우선순위 큐와 heapq를 어떻게 활용할 수 있나요?",
+          "category": "DATA_STRUCTURE_ALGORITHM",
+          "answer_text": "최소 힙을 크기 K로 유지하면서 스트림을 돌며, 새 값이 힙 루트보다 크면 넣고 작은 걸 빼면 됩니다. O(N log K)로 Top-K를 유지할 수 있습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DATA_STRUCTURE_ALGORITHM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DSA_02",
+    "description": "CS DSA - 분산 환경 Top-K 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-17",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "heapq로 Top-K를 O(N log K)에 추출하는 방식을 설명해 주세요.",
+          "category": "DATA_STRUCTURE_ALGORITHM",
+          "answer_text": "크기 K의 최소 힙을 유지하며 스트림을 한 번만 훑으면 됩니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "데이터 스트림이 여러 서버로 분산되어 들어올 때, 분산 환경에서 Top-K를 정확히 취합하는 구조를 어떻게 설계할 수 있나요?",
+          "category": "DATA_STRUCTURE_ALGORITHM",
+          "answer_text": "각 서버에서 로컬 Top-K를 뽑고, 이를 모아 다시 머지하거나 Redis Sorted Set 같은 구조로 집계하는 방식을 씁니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DATA_STRUCTURE_ALGORITHM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DSA_03",
+    "description": "CS DSA - 해시 테이블·체이닝 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-18",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "해시 테이블의 동작 원리와, 해시 충돌을 해결하는 체이닝 기법을 설명해 주세요.",
+          "category": "DATA_STRUCTURE_ALGORITHM",
+          "answer_text": "해시 함수로 버킷 인덱스를 구하고 그 위치에 저장합니다. 충돌 시 같은 버킷에 연결 리스트로 이어 붙이는 게 체이닝입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DATA_STRUCTURE_ALGORITHM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DSA_04",
+    "description": "CS DSA - HashMap 트리 변환 답변 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-19",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "해시 테이블 원리와 체이닝을 설명해 주세요.",
+          "category": "DATA_STRUCTURE_ALGORITHM",
+          "answer_text": "연결 리스트를 활용해 충돌을 해결하는 방식입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "한 버킷에 충돌이 몰려 연결 리스트가 길어지면 조회가 O(N)이 됩니다. Java HashMap처럼 이를 방어하기 위해 내부적으로 어떤 자료구조 변환을 하나요?",
+          "category": "DATA_STRUCTURE_ALGORITHM",
+          "answer_text": "일정 임계치 넘으면 해당 버킷을 레드-블랙 트리 등으로 바꿔 조회를 O(log N)으로 유지합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DATA_STRUCTURE_ALGORITHM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_DSA_05",
+    "description": "CS DSA - 커버링 인덱스 트레이드오프 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-20",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "B+Tree 인덱스와 카디널리티가 인덱스 효율에 미치는 영향을 설명해 주세요.",
+          "category": "DATA_STRUCTURE_ALGORITHM",
+          "answer_text": "카디널리티가 낮으면 인덱스 스캔 후 랜덤 I/O가 늘어 성능이 떨어질 수 있습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "랜덤 I/O를 줄이려고 쿼리 조건 컬럼을 모두 인덱스에 넣는 커버링 인덱스를 설계할 때, 주의할 트레이드오프는 무엇인가요?",
+          "category": "DATA_STRUCTURE_ALGORITHM",
+          "answer_text": "인덱스 크기가 커지고, 쓰기 시 갱신 비용이 늘어납니다. 필요한 컬럼만 포함해 설계해야 합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "DATA_STRUCTURE_ALGORITHM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_ARCH_01",
+    "description": "CS COMPUTER_ARCHITECTURE - vLLM PagedAttention 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-21",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "vLLM 같은 대규모 모델 서빙에서 메모리 병목을 줄이기 위해 PagedAttention이 OS 페이징과 비교해 어떻게 동작하는지 설명해 주세요.",
+          "category": "COMPUTER_ARCHITECTURE",
+          "answer_text": "KV 캐시 메모리 파편화를 줄이기 위해 블록 단위로 KV 캐시를 관리합니다. OS 페이징처럼 연속되지 않은 물리 블록을 논리적으로 묶어 사용해 메모리 활용도를 높입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "COMPUTER_ARCHITECTURE", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_ARCH_02",
+    "description": "CS COMPUTER_ARCHITECTURE - Latency vs Throughput 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-22",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "PagedAttention이 KV 캐시 파편화를 어떻게 해결하나요?",
+          "category": "COMPUTER_ARCHITECTURE",
+          "answer_text": "블록 단위로 KV 캐시를 관리해 파편화를 줄입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "PagedAttention 적용 시 모델 서빙의 지연 시간(Latency)과 처리량(Throughput) 트레이드오프를 어떻게 조절할 수 있나요?",
+          "category": "COMPUTER_ARCHITECTURE",
+          "answer_text": "배치 크기를 키우면 처리량은 올라가고 지연 시간은 늘어나고, 줄이면 반대입니다. 서비스 SLA에 맞춰 배치 크기를 튜닝합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "COMPUTER_ARCHITECTURE", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_ARCH_03",
+    "description": "CS COMPUTER_ARCHITECTURE - 동시성·동기화 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-23",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "CPU 바운드와 I/O 바운드 작업을 처리할 때 멀티프로세싱과 멀티스레딩 중 각각 어떤 방식이 유리하며 그 이유는 무엇인가요?",
+          "category": "COMPUTER_ARCHITECTURE",
+          "answer_text": "CPU 바운드는 멀티프로세싱이 유리하고(GIL 회피), I/O 바운드는 멀티스레딩이나 비동기 I/O가 유리합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "COMPUTER_ARCHITECTURE", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_ARCH_04",
+    "description": "CS COMPUTER_ARCHITECTURE - 데드락 재시도·멱등성 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-24",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "데드락 4가지 조건과 트랜잭션 락 정렬 원칙을 설명해 주세요.",
+          "category": "COMPUTER_ARCHITECTURE",
+          "answer_text": "상호 배제, 점유 대기, 비선점, 순환 대기. 락은 일관된 순서로 획득해 순환 대기를 끊습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "RDBMS에서 데드락으로 트랜잭션이 롤백됐을 때, 백엔드에서 재시도와 멱등성을 어떻게 구현해 복구하나요?",
+          "category": "COMPUTER_ARCHITECTURE",
+          "answer_text": "고유 트랜잭션 ID를 두고 재시도 시 같은 ID로 요청해, DB 유니크 제약 등으로 중복 실행을 막습니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "COMPUTER_ARCHITECTURE", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_CS_ARCH_05",
+    "description": "CS COMPUTER_ARCHITECTURE - 읽기 병목 레플리케이션 vs 캐싱 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-cs-25",
+      "question_type": "CS",
+      "interview_history": [
+        {
+          "question": "정규화·역정규화와 역정규화 시 데이터 동기화 방식을 설명해 주세요.",
+          "category": "COMPUTER_ARCHITECTURE",
+          "answer_text": "역정규화 시 이벤트 트리거나 배치 싱크로 동기화합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "대용량 트래픽에서 특정 테이블 읽기 요청이 몰릴 때, 레플리케이션 분리와 캐싱 중 어떤 것을 우선 고려하시며 그 이유는 무엇인가요?",
+          "category": "COMPUTER_ARCHITECTURE",
+          "answer_text": "캐싱이 적용 가능한 읽기 패턴이면 캐시를 먼저 쓰고, 실시간성·일관성 요구가 크면 레플리카 분리를 고려합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "COMPUTER_ARCHITECTURE", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_MESSAGING_01",
+    "description": "SD MESSAGING - 메시지 큐 도입 이점 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-01",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "이벤트 기반 아키텍처(EDA)에서 메시지 큐를 도입했을 때 시스템적으로 얻는 이점과 주의할 점은 무엇인가요?",
+          "category": "MESSAGING",
+          "answer_text": "서비스 간 결합도가 낮아지고 비동기 처리로 처리량과 장애 격리가 좋아집니다. 대신 순서 보장, 재시도·DLQ 설계, 모니터링이 필요합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "MESSAGING", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_MESSAGING_02",
+    "description": "SD MESSAGING - DLQ·재시도 전략 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-02",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "메시지 큐 도입 시 결합도 완화와 비동기 처리 이점을 설명해 주세요.",
+          "category": "MESSAGING",
+          "answer_text": "생산자와 소비자가 분리되고 장애가 전파되지 않습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "메시지 유실이나 큐(예: 카프카) 장애 시 데이터 정합성을 보장하기 위한 데드 레터 큐(DLQ)와 재시도 전략은 어떻게 구성하나요?",
+          "category": "MESSAGING",
+          "answer_text": "재시도는 지수적 백오프로 부하를 줄이고, N회 실패 시 DLQ로 보내 나중에 수동·배치 처리합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "MESSAGING", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_MESSAGING_03",
+    "description": "SD MESSAGING - 파티션 순서 보장 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-03",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "메시지 큐 도입 이점과 DLQ·재시도 전략을 설명해 주세요.",
+          "category": "MESSAGING",
+          "answer_text": "지수적 백오프 재시도와 DLQ로 실패 메시지를 분리합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "주식 체결·채팅처럼 메시지 순서가 꼭 보장되어야 할 때, 파티션된 큐에서 순서 보장을 어떻게 강제할 수 있나요?",
+          "category": "MESSAGING",
+          "answer_text": "같은 키(예: 사용자 ID, 주문 ID)를 가진 메시지는 같은 파티션으로 보내서 파티션 내 순서를 보장합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "MESSAGING", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_STORAGE_01",
+    "description": "SD STORAGE - GPU 스팟 인스턴스·체크포인트 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-04",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "클라우드에서 GPU 인스턴스로 고성능 연산을 할 때, 트래픽 급증에 대비한 오토 스케일링 아키텍처를 어떻게 설계하시겠습니까?",
+          "category": "STORAGE",
+          "answer_text": "트래픽 지표에 따라 인스턴스를 늘리고, 큐 기반으로 작업을 분배하는 방식을 생각합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "STORAGE", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_STORAGE_02",
+    "description": "SD STORAGE - 스팟 인스턴스 중단 방지 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-05",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "GPU 오토 스케일링 설계를 트래픽 기반으로 설명해 주세요.",
+          "category": "STORAGE",
+          "answer_text": "트래픽 기반으로 인스턴스를 늘렸다 줄이는 구조입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "GPU 비용 절감을 위해 스팟 인스턴스를 쓰면 회수 시 작업 중단이 발생할 수 있습니다. 중단을 어떻게 방지하나요?",
+          "category": "STORAGE",
+          "answer_text": "주기적으로 체크포인트를 저장해 회수 시 다른 인스턴스에서 이어서 실행하도록 합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "STORAGE", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_STORAGE_03",
+    "description": "SD STORAGE - S3 I/O 병목·캐싱 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-06",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "GPU 스팟 인스턴스와 체크포인트로 내결함성을 확보하는 방식을 설명해 주세요.",
+          "category": "STORAGE",
+          "answer_text": "체크포인트 저장으로 재시작 시 복구합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "체크포인트를 S3 같은 객체 스토리지에 두면 I/O 병목이 날 수 있습니다. 스토리지 계층화나 인메모리 캐싱으로 완화하는 방안이 있을까요?",
+          "category": "STORAGE",
+          "answer_text": "로컬 SSD나 인메모리 캐시를 앞단에 두고, S3는 최종 저장소로만 쓰는 방식으로 완화할 수 있습니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "STORAGE", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_NOTIFICATION_01",
+    "description": "SD NOTIFICATION - Transformer Self-Attention 한계 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-07",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "AI 모델을 서비스에 배포할 때, 트랜스포머 셀프 어텐션 메커니즘이 연산량 관점에서 가지는 한계는 무엇인가요?",
+          "category": "NOTIFICATION",
+          "answer_text": "입력 시퀀스 길이 N에 대해 어텐션 연산이 O(N^2)라서 긴 문맥에서 병목이 됩니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "NOTIFICATION", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_NOTIFICATION_02",
+    "description": "SD NOTIFICATION - Flash Attention 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-08",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "트랜스포머 Self-Attention의 O(N^2) 연산량 한계를 설명해 주세요.",
+          "category": "NOTIFICATION",
+          "answer_text": "입력 길이에 따라 제곱으로 연산량이 늘어납니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "긴 문맥(Long Context) 처리 시 이 병목을 완화하기 위해 Flash Attention 같은 최적화 기법은 어떻게 동작하나요?",
+          "category": "NOTIFICATION",
+          "answer_text": "메모리 접근을 줄이고 블록 단위로 연산해 IO를 최적화하는 방식입니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "NOTIFICATION", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_NOTIFICATION_03",
+    "description": "SD NOTIFICATION - OOM 모니터링 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-09",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "Flash Attention으로 메모리 IO를 최적화하는 방향을 설명해 주세요.",
+          "category": "NOTIFICATION",
+          "answer_text": "메모리 접근을 줄이는 방향입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "AWS/GCP 컨테이너 환경에서 GPU 메모리 부족으로 OOM이 날 때, 인프라 차원에서 사전에 방지하기 위한 모니터링은 어떻게 구성하나요?",
+          "category": "NOTIFICATION",
+          "answer_text": "GPU 메모리 사용량 메트릭을 수집하고, 임계치 초과 시 알람을 주거나 스케일 아웃하도록 합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "NOTIFICATION", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_SEARCH_01",
+    "description": "SD SEARCH - Langfuse 모니터링 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-10",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "프로덕션 AI 모니터링을 Langfuse로 어떻게 구성하시나요?",
+          "category": "SEARCH",
+          "answer_text": "Langfuse로 트레이스·로그를 수집해 체인 호출과 응답을 추적합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "SEARCH", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_SEARCH_02",
+    "description": "SD SEARCH - 지연 시간 원인 분석 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-11",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "Langfuse를 활용한 관측성 확보 방향을 설명해 주세요.",
+          "category": "SEARCH",
+          "answer_text": "트레이스와 응답 기록을 수집합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "체인 내 특정 노드 지연이 비정상적으로 길게 나올 때, 수집된 데이터로 어떤 지표부터 분석하시겠습니까?",
+          "category": "SEARCH",
+          "answer_text": "외부 API 호출, DB I/O 구간 등 구간별 지연을 나눠 보고 병목 구간을 찾습니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "SEARCH", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_SEARCH_03",
+    "description": "SD SEARCH - 토큰 비용·Rate Limit 게이트웨이 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-12",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "Langfuse 기반 모니터링과 지연 시간 원인 분석 과정을 설명해 주세요.",
+          "category": "SEARCH",
+          "answer_text": "트레이스 추적과 외부 API·DB I/O 구간 모니터링입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "Langfuse로 프롬프트 토큰 사용량에 따른 비용을 실시간 추적하고 Rate Limit을 걸려면, 게이트웨이 레이어와 어떻게 연동하시겠습니까?",
+          "category": "SEARCH",
+          "answer_text": "게이트웨이에서 사용자·키별 토큰 사용량을 집계하고, 임계치 초과 시 429를 반환하거나 Langfuse 메트릭과 연동해 제한합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "SEARCH", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_MEDIA_01",
+    "description": "SD MEDIA - Git 브랜치 전략 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-13",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "팀 협업을 위해 Git 브랜치 전략(Git Flow 등)과 커밋 메시지 컨벤션을 일관되게 유지하는 자동화 방안을 설명해 주세요.",
+          "category": "MEDIA",
+          "answer_text": "GitHub Flow를 쓰고, main 머지 시 CI가 돌게 해두었습니다. 커밋 메시지는 컨벤션 템플릿으로 맞춥니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "MEDIA", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_MEDIA_02",
+    "description": "SD MEDIA - 롤백 프로세스 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-14",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "Git 브랜치 전략과 CI/CD 파이프라인 연동을 설명해 주세요.",
+          "category": "MEDIA",
+          "answer_text": "main 머지 시 자동 빌드가 돌도록 했습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "잘못된 커밋이 운영에 배포되어 심각한 장애가 났을 때, 무중단으로 안전하게 롤백하는 프로세스와 Git 명령은 무엇인가요?",
+          "category": "MEDIA",
+          "answer_text": "이전 정상 커밋으로 revert 커밋을 만들거나, 배포 시스템에서 이전 이미지로 롤백합니다. git revert를 사용해 히스토리를 유지하는 편이 안전합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "MEDIA", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_PLATFORM_01",
+    "description": "SD PLATFORM - 202 Accepted·비동기 폴링 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-15",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "RESTful API와 상태 코드, 401·403 에러 시 프론트 처리에 대해 설명해 주세요.",
+          "category": "PLATFORM",
+          "answer_text": "명확한 리소스 표현과 상태 코드 분리, 401이면 재로그인 유도, 403이면 권한 부족 안내 페이지로 보냅니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "PLATFORM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_PLATFORM_02",
+    "description": "SD PLATFORM - 대용량 POST·202·폴링 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-16",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "HTTP 상태 코드와 401·403 프론트엔드 처리를 설명해 주세요.",
+          "category": "PLATFORM",
+          "answer_text": "재로그인 유도와 권한 부족 안내 페이지 라우팅입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "클라이언트가 대용량 데이터를 POST로 보내 서버 처리에 10분 이상 걸릴 때, 타임아웃을 막기 위해 202 Accepted와 비동기 폴링 구조를 어떻게 설계할 수 있나요?",
+          "category": "PLATFORM",
+          "answer_text": "POST로 요청 받고 202와 task_id를 반환한 뒤, 클라이언트는 해당 task_id로 주기적 조회해 완료 시 결과를 가져옵니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "PLATFORM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_PLATFORM_03",
+    "description": "SD PLATFORM - API 게이트웨이 인증·SPOF 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-17",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "로드 밸런서 L4 vs L7 차이를 설명해 주세요.",
+          "category": "PLATFORM",
+          "answer_text": "L4는 IP·포트, L7은 HTTP 헤더·URI 기반 통신입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "L7 로드 밸런서에서 JWT 등으로 인증을 1차 검증하고 마이크로서비스로 라우팅하는 게이트웨이 역할을 부여할 때의 장단점은 무엇인가요?",
+          "category": "PLATFORM",
+          "answer_text": "장점은 마이크로서비스 내부 로직이 단순해지는 것이고, 단점은 게이트웨이가 SPOF가 될 수 있다는 점입니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "PLATFORM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_PLATFORM_04",
+    "description": "SD PLATFORM - 게이트웨이 스케일아웃·DNS 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-18",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "로드 밸런서 L4/L7과 API 게이트웨이의 인증 역할을 설명해 주세요.",
+          "category": "PLATFORM",
+          "answer_text": "마이크로서비스 내부 로직 단순화 장점이 있습니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "게이트웨이에 트래픽이 몰려 SPOF가 될 위험을 줄이기 위한 게이트웨이 스케일 아웃과 DNS 라우팅 전략은 어떻게 설계하시겠습니까?",
+          "category": "PLATFORM",
+          "answer_text": "게이트웨이를 다중 인스턴스로 두고 L4/L7 로드밸런서 뒤에 붙이며, DNS는 로드밸런서를 가리키게 합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "PLATFORM", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_TRANSACTION_01",
+    "description": "SD TRANSACTION - MSA Saga 패턴 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-19",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "마이크로서비스 환경에서 여러 DB 간 데이터 일관성을 유지하기 위한 트랜잭션 관리 전략(예: Saga 패턴)을 어떻게 설계하시나요?",
+          "category": "TRANSACTION",
+          "answer_text": "보상 트랜잭션(Compensating Transaction)으로 실패 시 이전 단계를 롤백하는 방식입니다. 각 서비스가 로컬 트랜잭션 후 다음 서비스를 호출하고, 실패 시 보상 호출을 합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "TRANSACTION", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_TRANSACTION_02",
+    "description": "SD TRANSACTION - 멱등성·중복 결제 방지 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-20",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "MSA에서 Saga 패턴으로 데이터 일관성을 유지하는 방식을 설명해 주세요.",
+          "category": "TRANSACTION",
+          "answer_text": "보상 트랜잭션 개념으로 롤백 로직을 구성합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "결제 승인 후 인벤토리 차감 과정에서 네트워크 타임아웃으로 성공 여부를 알 수 없을 때, 멱등성을 설계해 중복 결제를 막는 구조는 어떻게 구현하나요?",
+          "category": "TRANSACTION",
+          "answer_text": "고유 트랜잭션 ID를 부여하고, DB에 유니크 제약을 걸어 같은 ID로 재요청 시 한 번만 처리되게 합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "TRANSACTION", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_TRANSACTION_03",
+    "description": "SD TRANSACTION - 서킷 브레이커·Fallback 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-21",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "멱등성과 유니크 제약으로 중복 결제를 방지하는 방식을 설명해 주세요.",
+          "category": "TRANSACTION",
+          "answer_text": "고유 트랜잭션 ID와 DB 유니크 제약을 활용합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "외부 결제 모듈(PG사) 응답 지연으로 스레드 풀이 고갈되는 것을 막기 위해, 서킷 브레이커를 어떻게 적용하고 Fallback은 어떻게 구성하나요?",
+          "category": "TRANSACTION",
+          "answer_text": "연속 실패 수가 임계치를 넘으면 서킷을 열어 즉시 실패 반환하고, 일정 시간 후 반쪽 열어 일부만 시도합니다. Fallback은 기본값 반환이나 캐시된 결과를 반환합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "TRANSACTION", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_SOCIAL_01",
+    "description": "SD SOCIAL - 분산 트레이싱·샘플링 메인 후 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-22",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "프로덕션에서 마이크로서비스 간 호출 체인을 추적하기 위해 Langfuse나 분산 트레이싱을 도입할 때, 시스템에 미치는 오버헤드를 어떻게 최소화하시나요?",
+          "category": "SOCIAL",
+          "answer_text": "비동기로 로그를 전송하고, 샘플링을 적용해 일부 요청만 추적합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "SOCIAL", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_SOCIAL_02",
+    "description": "SD SOCIAL - Tail-based Sampling 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-23",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "분산 트레이싱 도입 시 오버헤드 최소화 방안을 설명해 주세요.",
+          "category": "SOCIAL",
+          "answer_text": "비동기 로그 전송과 샘플링 적용입니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "10%만 샘플링할 때 에러가 난 트랜잭션이 샘플에 안 들어가 유실되는 문제를 막기 위한 테일 베이스 샘플링(Tail-based Sampling)을 아키텍처에 어떻게 녹일 수 있나요?",
+          "category": "SOCIAL",
+          "answer_text": "요청이 끝난 뒤 에러 여부를 보고, 에러가 있으면 해당 트레이스는 버퍼에 모았다가 반드시 전송하는 방식으로 적용할 수 있습니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "SOCIAL", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_SOCIAL_03",
+    "description": "SD SOCIAL - Retention·Aggregation 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-24",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "Langfuse 트레이싱과 Tail-based Sampling으로 에러 로그 유실을 방지하는 방식을 설명해 주세요.",
+          "category": "SOCIAL",
+          "answer_text": "엣지 프록시나 버퍼로 판단한 뒤 전송합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        },
+        {
+          "question": "트레이스 데이터가 쌓여 분석 DB 스토리지 비용이 늘어날 때, 보존 주기(Retention) 정책과 집계(Aggregation) 롤업 전략을 어떻게 세팅하시겠습니까?",
+          "category": "SOCIAL",
+          "answer_text": "원본 트레이스는 7~14일 보관 후 삭제하고, 일/시간 단위 집계 메트릭은 장기 보관하는 방식으로 설정합니다.",
+          "turn_type": "follow_up",
+          "turn_order": 1,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "SOCIAL", "context_continues_from_last_answer": true }
+  },
+  {
+    "id": "FU_SD_PLATFORM_05",
+    "description": "SD PLATFORM - 컨테이너 vs VM·자원 격리 꼬리질문",
+    "input": {
+      "user_id": 1,
+      "session_id": "eval-fu-sd-25",
+      "question_type": "SYSTEM_DESIGN",
+      "interview_history": [
+        {
+          "question": "도커 기반 컨테이너가 VM과 차별화되는 구조적 이점과, CI/CD에서의 활용을 설명해 주세요.",
+          "category": "PLATFORM",
+          "answer_text": "커널을 공유해 경량화되고 부팅이 빠릅니다. CI/CD에서는 이미지로 빌드 결과를 넘겨 동일 환경에서 배포합니다.",
+          "turn_type": "new_topic",
+          "turn_order": 0,
+          "topic_id": 1
+        }
+      ]
+    },
+    "expected_criteria": { "category_stays": "PLATFORM", "context_continues_from_last_answer": true }
+  }
+]

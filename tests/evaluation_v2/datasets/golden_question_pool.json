@@ -1,0 +1,397 @@
+[
+  {
+    "id": "QP_PORTFOLIO_WEB_01",
+    "description": "웹 백엔드 중심 포트폴리오(주문/매칭) 질문 풀 골든셋",
+    "input": {
+      "user_id": 1001,
+      "portfolio": {
+        "projects": [
+          {
+            "project_name": "FoodDelivery",
+            "tech_stack": "Spring Boot, PostgreSQL, Redis, Kafka, Docker, AWS ECS",
+            "arch_image_url": null,
+            "content": "음식 배달 플랫폼 백엔드를 개발했다. 피크 타임 주문 폭주로 재고 불일치가 발생해 Redis 분산 락과 DB 비관적 락을 조합했다. 메뉴 조회는 Cache-Aside 패턴과 TTL 정책으로 최적화했고, 변경 이벤트 기반 무효화로 일관성을 보완했다. 결제는 SAGA 보상 트랜잭션으로 설계했다. 주문 처리 p95는 1.2초에서 620ms로 개선됐고 결제 실패율은 1.8%에서 0.4%로 낮췄다.",
+            "role": "백엔드 개발자 (3인 팀), 주문/결제 도메인 담당"
+          },
+          {
+            "project_name": "StudyMate",
+            "tech_stack": "Spring Boot, MySQL, WebSocket, Redis, Firebase FCM",
+            "arch_image_url": null,
+            "content": "스터디 매칭 서비스를 개발했다. 규칙 기반 매칭에서 가중치 기반 점수 모델로 전환해 매칭 성공률을 52%에서 79%로 높였다. 실시간 채팅은 WebSocket으로 구현했고 메시지 유실 이슈를 재전송 큐와 ACK 처리로 해결했다. FCM 푸시 중복 발송 문제는 idempotency key로 해결했다.",
+            "role": "풀스택 개발자 (2인 팀), 매칭/실시간 기능 담당"
+          }
+        ]
+      }
+    },
+    "expected_criteria": {
+      "golden_question_pool": [
+        {
+          "question_id": 1,
+          "project_name": "FoodDelivery",
+          "question_text": "주문 충돌 구간에서 Redis 분산 락과 DB 비관적 락을 함께 사용하셨다고 했는데, 두 락의 책임 범위를 어떻게 분리하셨나요?"
+        },
+        {
+          "question_id": 2,
+          "project_name": "FoodDelivery",
+          "question_text": "Cache-Aside + TTL 조합에서 TTL 값을 결정할 때 어떤 트래픽/변경 주기 데이터를 근거로 삼았나요?"
+        },
+        {
+          "question_id": 3,
+          "project_name": "FoodDelivery",
+          "question_text": "메뉴 변경 이벤트 기반 무효화에서 순서 역전이나 중복 이벤트가 발생했을 때 일관성을 어떻게 보장했나요?"
+        },
+        {
+          "question_id": 4,
+          "project_name": "FoodDelivery",
+          "question_text": "결제 흐름에서 SAGA를 선택할 때 2PC와 비교해 어떤 트레이드오프를 고려했는지 설명해 주세요."
+        },
+        {
+          "question_id": 5,
+          "project_name": "StudyMate",
+          "question_text": "규칙 기반에서 가중치 기반 매칭으로 바꿀 때 가중치 초기값을 어떻게 설정했고 이후 어떤 방식으로 튜닝했나요?"
+        },
+        {
+          "question_id": 6,
+          "project_name": "StudyMate",
+          "question_text": "WebSocket 채팅에서 재전송 큐와 ACK를 적용했을 때 중복 수신 메시지는 어떤 기준으로 제거했나요?"
+        },
+        {
+          "question_id": 7,
+          "project_name": "StudyMate",
+          "question_text": "FCM 중복 발송을 idempotency key로 막았다고 했는데, key 생성 규칙과 보관 만료 정책은 어떻게 설계했나요?"
+        },
+        {
+          "question_id": 8,
+          "project_name": "StudyMate",
+          "question_text": "매칭 성공률이 개선된 이후에도 성능이 정체된 구간이 있었다면, 다음 개선 실험은 무엇을 계획했나요?"
+        }
+      ],
+      "rubric_expectations": {
+        "relevance_min": 4,
+        "specificity_min": 4,
+        "depth_potential_min": 4,
+        "interview_fit_min": 4
+      },
+      "expected_question_count_range": {
+        "min": 6,
+        "max": 10
+      }
+    }
+  },
+  {
+    "id": "QP_PORTFOLIO_DATA_01",
+    "description": "데이터/ML 포트폴리오(파이프라인/서빙) 질문 풀 골든셋",
+    "input": {
+      "user_id": 1002,
+      "portfolio": {
+        "projects": [
+          {
+            "project_name": "AdRankingPipeline",
+            "tech_stack": "Airflow, Spark, Kafka, BigQuery, dbt, Looker",
+            "arch_image_url": null,
+            "content": "광고 랭킹 피처 파이프라인을 구축했다. 기존 일배치 기반 지연으로 CTR 예측 성능이 떨어져 Spark Structured Streaming과 Kafka를 도입해 피처 지연을 24시간에서 20분으로 줄였다. 스키마 변경으로 파이프라인이 자주 깨지는 문제는 Schema Registry와 backward compatibility 룰로 해결했다. BigQuery 비용은 파티션/클러스터링 최적화로 32% 절감했다.",
+            "role": "데이터 엔지니어 (4인 팀), 스트리밍 파이프라인 담당"
+          },
+          {
+            "project_name": "FraudScoringAPI",
+            "tech_stack": "Python, FastAPI, XGBoost, Feast, Redis, Kubernetes",
+            "arch_image_url": null,
+            "content": "결제 이상탐지 API를 운영했다. 온라인/오프라인 피처 불일치로 모델 성능이 흔들려 Feast 기반 피처 스토어를 도입해 학습-서빙 일관성을 맞췄다. 실시간 추론 p95를 280ms에서 95ms로 개선했고, 드리프트 감지 대시보드를 구축해 데이터 분포 이상을 조기 탐지했다.",
+            "role": "ML 엔지니어 (3인 팀), 피처 스토어 및 서빙 담당"
+          }
+        ]
+      }
+    },
+    "expected_criteria": {
+      "golden_question_pool": [
+        {
+          "question_id": 1,
+          "project_name": "AdRankingPipeline",
+          "question_text": "일배치에서 스트리밍으로 전환할 때 정확도와 비용 중 무엇을 우선순위로 두었고, 그 판단 근거는 무엇이었나요?"
+        },
+        {
+          "question_id": 2,
+          "project_name": "AdRankingPipeline",
+          "question_text": "Spark Structured Streaming에서 상태 저장 연산의 상태 크기 증가를 어떻게 모니터링하고 관리했나요?"
+        },
+        {
+          "question_id": 3,
+          "project_name": "AdRankingPipeline",
+          "question_text": "Schema Registry의 호환성 정책을 backward로 선택했다면, 그로 인해 포기한 장점이나 감수한 제약은 무엇이었나요?"
+        },
+        {
+          "question_id": 4,
+          "project_name": "AdRankingPipeline",
+          "question_text": "BigQuery 비용 32% 절감에서 가장 효과가 컸던 최적화 한 가지를 선택해 적용 전후 쿼리 패턴을 설명해 주세요."
+        },
+        {
+          "question_id": 5,
+          "project_name": "FraudScoringAPI",
+          "question_text": "Feast 도입 전후로 online/offline feature skew를 어떤 지표로 측정했나요?"
+        },
+        {
+          "question_id": 6,
+          "project_name": "FraudScoringAPI",
+          "question_text": "추론 p95를 95ms까지 줄이는 과정에서 모델 경량화와 시스템 최적화 중 어느 쪽 기여가 더 컸나요?"
+        },
+        {
+          "question_id": 7,
+          "project_name": "FraudScoringAPI",
+          "question_text": "데이터 드리프트 경보가 발생했을 때 재학습 트리거를 자동화할지 수동 승인할지 어떻게 결정했나요?"
+        },
+        {
+          "question_id": 8,
+          "project_name": "FraudScoringAPI",
+          "question_text": "실시간 이상탐지에서 false positive를 낮추기 위해 임계값을 조정할 때 어떤 비즈니스 비용을 함께 고려했나요?"
+        }
+      ],
+      "rubric_expectations": {
+        "relevance_min": 4,
+        "specificity_min": 4,
+        "depth_potential_min": 4,
+        "interview_fit_min": 4
+      },
+      "expected_question_count_range": {
+        "min": 6,
+        "max": 10
+      }
+    }
+  },
+  {
+    "id": "QP_PORTFOLIO_MOBILE_01",
+    "description": "모바일/앱 포트폴리오(오프라인 동기화/실시간 기능) 질문 풀 골든셋",
+    "input": {
+      "user_id": 1003,
+      "portfolio": {
+        "projects": [
+          {
+            "project_name": "FitTrack",
+            "tech_stack": "React Native, TypeScript, Realm, Firebase Crashlytics, Redux Toolkit",
+            "arch_image_url": null,
+            "content": "운동 기록 모바일 앱을 개발했다. 오프라인 환경에서 기록 누락이 잦아 로컬 우선 저장 후 백그라운드 동기화 전략으로 전환했다. 충돌 해결은 last-write-wins에서 필드 단위 병합으로 바꿔 데이터 손실을 줄였다. 앱 크래시율은 2.4%에서 0.6%로 개선했다.",
+            "role": "모바일 개발자 (2인 팀), 데이터 동기화 담당"
+          },
+          {
+            "project_name": "MealLens",
+            "tech_stack": "Flutter, Dart, FastAPI, PostgreSQL, AWS Lambda, S3",
+            "arch_image_url": null,
+            "content": "식단 사진 인식 앱을 개발했다. 이미지 업로드 지연이 길어 presigned URL 기반 직접 업로드로 전환하고 서버 부하를 줄였다. 분류 결과 품질 향상을 위해 오류 샘플을 주기적으로 재라벨링해 재학습 파이프라인에 반영했다. 첫 화면 로딩 시간은 3.8초에서 1.9초로 단축했다.",
+            "role": "앱/백엔드 개발자 (1인 프로젝트)"
+          }
+        ]
+      }
+    },
+    "expected_criteria": {
+      "golden_question_pool": [
+        {
+          "question_id": 1,
+          "project_name": "FitTrack",
+          "question_text": "로컬 우선 저장 전략에서 동기화 큐의 재시도 백오프 정책은 어떻게 설계했나요?"
+        },
+        {
+          "question_id": 2,
+          "project_name": "FitTrack",
+          "question_text": "last-write-wins를 버리고 필드 단위 병합으로 바꿀 때 충돌 규칙을 어떤 기준으로 정의했나요?"
+        },
+        {
+          "question_id": 3,
+          "project_name": "FitTrack",
+          "question_text": "크래시율 개선 과정에서 가장 먼저 해결한 크래시 유형은 무엇이었고, 왜 그 순서를 택했나요?"
+        },
+        {
+          "question_id": 4,
+          "project_name": "FitTrack",
+          "question_text": "Redux Toolkit 상태 구조를 설계할 때 오프라인/온라인 상태 전환 복잡도를 줄이기 위해 어떤 분리 원칙을 사용했나요?"
+        },
+        {
+          "question_id": 5,
+          "project_name": "MealLens",
+          "question_text": "presigned URL 직접 업로드 방식으로 전환할 때 보안 측면에서 어떤 제한 조건을 걸었나요?"
+        },
+        {
+          "question_id": 6,
+          "project_name": "MealLens",
+          "question_text": "재라벨링 데이터셋을 만들 때 라벨 품질을 검증하는 절차를 어떻게 운영했나요?"
+        },
+        {
+          "question_id": 7,
+          "project_name": "MealLens",
+          "question_text": "첫 화면 로딩 1.9초 달성에서 네트워크 최적화와 렌더링 최적화 중 어느 쪽이 더 큰 영향을 줬나요?"
+        },
+        {
+          "question_id": 8,
+          "project_name": "MealLens",
+          "question_text": "이미지 분류 결과가 불확실할 때 사용자 경험을 해치지 않기 위해 어떤 fallback 인터랙션을 설계했나요?"
+        }
+      ],
+      "rubric_expectations": {
+        "relevance_min": 4,
+        "specificity_min": 4,
+        "depth_potential_min": 4,
+        "interview_fit_min": 4
+      },
+      "expected_question_count_range": {
+        "min": 6,
+        "max": 10
+      }
+    }
+  },
+  {
+    "id": "QP_PORTFOLIO_INFRA_01",
+    "description": "인프라/플랫폼 포트폴리오(Kubernetes/관측성) 질문 풀 골든셋",
+    "input": {
+      "user_id": 1004,
+      "portfolio": {
+        "projects": [
+          {
+            "project_name": "K8sMigration",
+            "tech_stack": "Kubernetes, Helm, Argo CD, Terraform, AWS EKS, GitHub Actions",
+            "arch_image_url": null,
+            "content": "모놀리식 배포 환경을 Kubernetes 기반으로 마이그레이션했다. 무중단 배포를 위해 blue-green과 canary를 서비스 특성별로 분리 적용했다. Terraform 모듈화로 환경 편차를 줄였고, GitOps로 배포 이력 추적성을 확보했다. 배포 실패율은 7.5%에서 1.2%로 감소했고 평균 롤백 시간은 18분에서 4분으로 단축됐다.",
+            "role": "플랫폼 엔지니어 (4인 팀), 인프라 자동화 담당"
+          },
+          {
+            "project_name": "ObservabilityHub",
+            "tech_stack": "Prometheus, Grafana, Loki, Tempo, OpenTelemetry, Alertmanager",
+            "arch_image_url": null,
+            "content": "관측성 통합 플랫폼을 구축했다. 서비스별로 분절된 로그/메트릭/트레이스를 OpenTelemetry로 수집 표준화했다. 에러 버짓 기반 알림 정책을 적용해 노이즈 알림을 줄였고, 장애 원인 분석 시간을 평균 52분에서 17분으로 줄였다.",
+            "role": "SRE (3인 팀), 모니터링 표준화 담당"
+          }
+        ]
+      }
+    },
+    "expected_criteria": {
+      "golden_question_pool": [
+        {
+          "question_id": 1,
+          "project_name": "K8sMigration",
+          "question_text": "blue-green과 canary를 서비스별로 다르게 적용했다고 했는데, 배포 전략 선택 기준을 어떻게 정의했나요?"
+        },
+        {
+          "question_id": 2,
+          "project_name": "K8sMigration",
+          "question_text": "Terraform 모듈화 이후에도 남아 있던 환경 편차 이슈는 무엇이었고 어떻게 해소했나요?"
+        },
+        {
+          "question_id": 3,
+          "project_name": "K8sMigration",
+          "question_text": "GitOps 도입으로 배포 안정성은 올라가지만 운영 복잡도도 증가하는데, 어떤 비용을 감수했나요?"
+        },
+        {
+          "question_id": 4,
+          "project_name": "K8sMigration",
+          "question_text": "롤백 시간을 4분으로 줄인 핵심 자동화 단계 한 가지를 구체적으로 설명해 주세요."
+        },
+        {
+          "question_id": 5,
+          "project_name": "ObservabilityHub",
+          "question_text": "OpenTelemetry 수집 표준화에서 팀별 로그 포맷 차이를 어떤 마이그레이션 절차로 통일했나요?"
+        },
+        {
+          "question_id": 6,
+          "project_name": "ObservabilityHub",
+          "question_text": "에러 버짓 기반 알림 정책으로 바꿀 때 알림 민감도 저하로 놓칠 수 있는 리스크는 어떻게 관리했나요?"
+        },
+        {
+          "question_id": 7,
+          "project_name": "ObservabilityHub",
+          "question_text": "장애 분석 시간을 17분으로 줄인 대시보드/트레이스 설계 요소 중 가장 기여한 것은 무엇이었나요?"
+        },
+        {
+          "question_id": 8,
+          "project_name": "ObservabilityHub",
+          "question_text": "관측성 플랫폼 규모가 2배로 커질 때 수집 비용을 통제하기 위한 다음 최적화 계획은 무엇인가요?"
+        }
+      ],
+      "rubric_expectations": {
+        "relevance_min": 4,
+        "specificity_min": 4,
+        "depth_potential_min": 4,
+        "interview_fit_min": 4
+      },
+      "expected_question_count_range": {
+        "min": 6,
+        "max": 10
+      }
+    }
+  },
+  {
+    "id": "QP_PORTFOLIO_AI_01",
+    "description": "AI 서비스 포트폴리오(RAG/음성면접) 질문 풀 골든셋",
+    "input": {
+      "user_id": 1005,
+      "portfolio": {
+        "projects": [
+          {
+            "project_name": "SupportBotRAG",
+            "tech_stack": "FastAPI, LangChain, OpenAI, pgvector, Redis, Celery",
+            "arch_image_url": null,
+            "content": "고객지원 챗봇을 구축했다. 단순 FAQ 매칭 방식에서 RAG로 전환해 답변 정확도를 개선했다. 문서 chunking 전략과 hybrid retrieval 튜닝으로 관련 문서 재현율을 높였고, 환각 응답은 출처 강제와 저신뢰 fallback으로 통제했다. 평균 응답 시간은 4.2초에서 1.7초로 단축했다.",
+            "role": "AI 엔지니어 (3인 팀), 검색/생성 파이프라인 담당"
+          },
+          {
+            "project_name": "InterviewCoachVoice",
+            "tech_stack": "Whisper, Gemini, FastAPI, Redis Queue, ElevenLabs TTS",
+            "arch_image_url": null,
+            "content": "음성 기반 모의면접 시스템을 개발했다. STT-LLM-TTS 파이프라인 지연이 길어 사용자 이탈이 발생해 병렬 처리와 캐시를 적용했다. 질문 라우팅 품질을 높이기 위해 답변 분석 규칙과 LLM judge 기반 평가 루프를 도입했다. 세션 이탈률은 28%에서 15%로 감소했다.",
+            "role": "백엔드/AI 개발자 (2인 팀), 대화 품질 평가 담당"
+          }
+        ]
+      }
+    },
+    "expected_criteria": {
+      "golden_question_pool": [
+        {
+          "question_id": 1,
+          "project_name": "SupportBotRAG",
+          "question_text": "RAG 전환 시 답변 정확도 향상을 어떤 오프라인 평가셋과 지표로 검증했나요?"
+        },
+        {
+          "question_id": 2,
+          "project_name": "SupportBotRAG",
+          "question_text": "chunking 전략을 결정할 때 문서 구조(표, 코드블록, 문단)별로 어떤 규칙 차등을 두었나요?"
+        },
+        {
+          "question_id": 3,
+          "project_name": "SupportBotRAG",
+          "question_text": "hybrid retrieval에서 lexical 점수와 semantic 점수를 결합하는 가중치는 어떻게 최적화했나요?"
+        },
+        {
+          "question_id": 4,
+          "project_name": "SupportBotRAG",
+          "question_text": "저신뢰 fallback이 자주 발생하면 사용자 만족도가 떨어질 수 있는데, 임계값을 어떻게 운영했나요?"
+        },
+        {
+          "question_id": 5,
+          "project_name": "InterviewCoachVoice",
+          "question_text": "STT-LLM-TTS 파이프라인에서 체감 지연을 줄이기 위해 가장 먼저 병목으로 본 단계는 무엇이었나요?"
+        },
+        {
+          "question_id": 6,
+          "project_name": "InterviewCoachVoice",
+          "question_text": "질문 라우팅 품질 평가에서 규칙 기반 분석과 LLM judge 결과가 충돌할 때 최종 판정은 어떻게 정했나요?"
+        },
+        {
+          "question_id": 7,
+          "project_name": "InterviewCoachVoice",
+          "question_text": "세션 이탈률 15% 달성 이후에도 남은 주요 이탈 원인을 어떤 방식으로 분해해서 보고 있나요?"
+        },
+        {
+          "question_id": 8,
+          "project_name": "InterviewCoachVoice",
+          "question_text": "음성 면접 시스템을 다국어로 확장할 때 현재 아키텍처에서 먼저 수정해야 할 구성요소는 무엇인가요?"
+        }
+      ],
+      "rubric_expectations": {
+        "relevance_min": 4,
+        "specificity_min": 4,
+        "depth_potential_min": 4,
+        "interview_fit_min": 4
+      },
+      "expected_question_count_range": {
+        "min": 6,
+        "max": 10
+      }
+    }
+  }
+]

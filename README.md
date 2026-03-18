@@ -135,6 +135,8 @@ uv run ruff format --check .
 ## 6. 프로젝트 구조
 
 ```
+tree -I '__pycache__|.git|node_modules|.venv|.env|tests|scripts|jupyter|audio_data|.github|.pytest_cache|.ruff_cache' -a --dirsfirst
+
 .
 ├── core/                 # 설정, 의존성, 로깅, 모니터링
 ├── exceptions/           # 커스텀 예외 처리

@@ -1,0 +1,21 @@
+{
+    "user_id": 1,
+        "portfolio": {
+            "projects": [
+                {
+                    "project_name": "FoodDelivery",
+                    "tech_stack": "Spring Boot, PostgreSQL, Redis, Docker, AWS EC2",
+                    "arch_image_url": null,
+                    "content": "음식 배달 플랫폼 백엔드 서비스를 개발했습니다.주문 동시성 처리 문제와 메뉴 조회 성능 병목이 주요 기술적 도전이었습니다. 피크 시간대에 주문 충돌로 인한 재고 불일치 문제가 있었고, Redis 분산 락과 비관적 락을 조합하여 해결했습니다 메뉴 조회 시 DB 부하가 과도하여 Cache-Aside 패턴으로 Redis 캐시를 도입했고, TTL 5분 + write-through 방식으로 캐시 일관성을 유지했습니다. 주문 처리 응답시간을 평균 800ms에서 480ms로 40% 개선했으며 동시 주문 처리량 초당 500건을 달성했습니다. 캐시 히트율 92%를 달성하여 DB 부하를 대폭 줄였습니다.",
+                    "role": "백엔드 개발자 (3인 팀), 주문 처리 시스템 및 캐시 설계 담당"
+                },
+                {
+                    "project_name": "StudyMate",
+                    "tech_stack": "Spring Boot, MySQL, WebSocket, FCM, AWS S3",
+                    "arch_image_url": null,
+                    "content": "스터디 그룹 매칭 서비스를 1인 프로젝트로 개발했습니다. 기존 키워드 매칭 방식은 매칭 성공률이 45%로 낮아 사용자 이탈이 높았습니다. 관심 분야, 학습 수준, 선호 시간대 등 다차원 유사도 기반 매칭 알고리즘으로 전환하여, 매칭 성공률을 78%로 개선했습니다. WebSocket 기반 실시간 채팅을 구현했으며 메시지 전달 지연을 100ms 이내로 유지했습니다 .FCM을 연동하여 스터디 알림, 채팅 알림 등 푸시 알림 시스템도 구축했습니다. MAU 500명을 달성했습니다.",
+                    "role": "풀스택 개발자 (1인 프로젝트)"
+                }
+            ]
+        }
+}

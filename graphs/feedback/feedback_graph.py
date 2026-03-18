@@ -2,9 +2,9 @@ from langgraph.graph import StateGraph, END
 
 
 from .state import FeedbackGraphState
-from graphs.nodes.rubric_evaluator import rubric_evaluator
+from project.qfeed.graphs.nodes.rubric_evaluator import rubric_evaluator
 from graphs.nodes.keyword_checker import keyword_checker
-from graphs.nodes.feedback_generator import feedback_generator
+from project.qfeed.graphs.nodes.CS.feedback_generator import feedback_generator
 # from nodes.send_callback import send_callback # 추후 비동기 도입 시 사용
 
 from exceptions.exceptions import AppException

@@ -1,0 +1,78 @@
+# Winenu 포트폴리오 질문 관점 분류 체계
+# 용도: 포트폴리오 질문 생성 시 LLM 태깅, 취약점 프로파일 집계, 추천 로직
+# 구조: 단일 depth 고정 카테고리 (모든 포트폴리오에 공통 적용)
+
+aspects:
+  - id: design_intent
+    name: 설계 의도
+    description: 왜 이렇게 설계했는지, 아키텍처 선택 이유, 전체 구조의 의도
+    keywords: [설계, 아키텍처, 구조, 이유, 의도, 왜, 선택, 접근 방식]
+    example_questions:
+      - 이 프로젝트의 전체 아키텍처를 이렇게 설계한 이유는?
+      - 모놀리식 대신 MSA를 선택한 배경은?
+
+  - id: tech_choice
+    name: 기술 선택 근거
+    description: 특정 기술을 선택한 이유, 대안과의 비교, 기술 선정 기준
+    keywords: [기술 선택, 왜 사용, 대안, 비교, 선정 기준, 다른 기술, 대체]
+    example_questions:
+      - Redis를 캐시로 선택한 이유는? Memcached와 비교했나?
+      - JPA 대신 MyBatis를 선택한 이유는?
+
+  - id: tradeoff
+    name: 트레이드오프 분석
+    description: 선택의 장단점, 포기한 것과 얻은 것, 기술적 절충
+    keywords: [트레이드오프, 장단점, 포기, 절충, 단점, 한계, 감수, 비용]
+    example_questions:
+      - MSA 도입으로 얻은 것과 포기한 것은?
+      - 비정규화를 선택한 트레이드오프는?
+
+  - id: troubleshooting
+    name: 장애 대응
+    description: 문제 상황에서의 대처 경험, 디버깅 과정, 장애 해결 사례
+    keywords:
+      [장애, 에러, 버그, 디버깅, 문제, 해결, 대응, 원인 분석, 트러블슈팅]
+    example_questions:
+      - 운영 중 겪은 가장 큰 장애는? 어떻게 해결했나?
+      - OOM이 발생했을 때 어떻게 원인을 추적했나?
+
+  - id: optimization
+    name: 성능 최적화
+    description: 성능 개선 경험, 병목 식별, 측정 방법, 개선 전후 비교
+    keywords: [성능, 최적화, 병목, 개선, 속도, 응답시간, TPS, 프로파일링, 튜닝]
+    example_questions:
+      - API 응답 속도를 개선한 경험이 있나? 어떻게 측정하고 개선했나?
+      - N+1 쿼리 문제를 어떻게 발견하고 해결했나?
+
+  - id: scalability
+    name: 확장성 고려
+    description: 트래픽 증가, 데이터 증가에 대한 대비, 수평/수직 확장 전략
+    keywords:
+      [확장성, 스케일링, 트래픽, 대용량, 수평 확장, 수직 확장, 부하, 분산]
+    example_questions:
+      - 사용자가 10배 늘어나면 현재 아키텍처에서 어디가 먼저 병목이 될까?
+      - DB 샤딩이나 읽기 전용 레플리카를 고려한 적 있나?
+
+  - id: deep_dive
+    name: 기술 심화 이해
+    description: 사용한 기술의 내부 동작 원리, 깊은 이해도 검증
+    keywords: [내부 동작, 원리, 어떻게 동작, 내부적으로, 메커니즘, 구현]
+    example_questions:
+      - Spring의 @Transactional은 내부적으로 어떻게 동작하나?
+      - Kafka의 파티션과 컨슈머 그룹은 어떻게 동작하나?
+
+  - id: testing_quality
+    name: 테스트 / 품질 관리
+    description: 테스트 전략, 코드 품질 관리, 배포 안정성 확보 방법
+    keywords: [테스트, 단위 테스트, 통합 테스트, 코드 리뷰, 품질, 커버리지, QA]
+    example_questions:
+      - 테스트 전략은 어떻게 세웠나? 어떤 테스트를 중점적으로 작성했나?
+      - 배포 전 품질을 어떻게 보장했나?
+
+  - id: collaboration
+    name: 협업 / 의사결정
+    description: 팀 내 기술적 의사결정 과정, 협업 방식, 갈등 해결
+    keywords: [협업, 의사결정, 팀, 코드 리뷰, 컨벤션, 갈등, 합의, 역할]
+    example_questions:
+      - 팀에서 기술적 의견이 갈렸을 때 어떻게 결정했나?
+      - 코드 리뷰 프로세스는 어떻게 운영했나?

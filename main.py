@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from routers import stt,feedback,question, tts
+from routers import stt,feedback,question, tts, portfolio
 
 
 from exceptions.handlers import app_exception_handler, global_exception_handler
@@ -49,6 +49,7 @@ app.include_router(stt.router, prefix="/ai", tags=["stt"])
 app.include_router(feedback.router, prefix="/ai", tags=["feedback"])
 app.include_router(question.router, prefix="/ai", tags=["question"])
 app.include_router(tts.router, prefix="/ai", tags=["tts"])
+app.include_router(portfolio.router, prefix="/ai", tags=["portfolio"])
 
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(Exception, global_exception_handler)

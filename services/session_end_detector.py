@@ -3,6 +3,7 @@
 """사용자 발화에서 '면접 종료' 요청 여부 감지 (룰 + LLM 백업)"""
 
 import re
+from typing import Literal, Optional
 
 from core.dependencies import get_llm_provider
 from core.logging import get_logger
@@ -10,8 +11,7 @@ from prompts.session_end_intent import (
     get_session_end_intent_system_prompt,
     build_session_end_intent_prompt,
 )
-from schemas.question import SessionEndIntentOutput
-
+from schemas.question import SessionEndIntentOutput, EndSessionRouterResult
 logger = get_logger(__name__)
 
 # 사용자가 면접 종료를 요청할 때 쓸 수 있는 표현 (공백 정규화 후 포함 여부로 판단)
@@ -76,27 +76,24 @@ async def is_user_requested_session_end(
     answer_text: str,
     confidence_threshold: float = 0.92,
     llm_provider: str = "gemini_lite",
-) -> tuple[bool, float, str]:
-    """
-    하이브리드 판단:
-    - 1차: 룰 매칭(명시적 종료 표현) → 즉시 True
-    - 2차: (룰 미매치 + 힌트 존재 시) LLM 구조화 분류 → confidence_threshold 이상일 때만 True
-
-    Returns:
-        (should_end, confidence, reasoning)
-    """
+) -> Optional[EndSessionRouterResult]:
+    
+    # 1. 빈 답변인 경우 -> 종료 요청 아님 (None 반환)
     if not answer_text or not answer_text.strip():
-        return (False, 0.0, "empty_answer")
+        return None 
 
     normalized = _normalize(answer_text)
 
-    # Step 1: 룰 기반 즉시 종료
+    # 2. 룰 기반 즉시 종료
     if is_user_requested_session_end_rule_only(normalized):
-        return (True, 1.0, "rule_match")
+        return EndSessionRouterResult(
+            decision="end_session",
+            reasoning="Rule match: 사용자의 명시적인 면접 종료 발화가 감지되었습니다."
+        )
 
-    # Step 2: 애매한 케이스만 LLM 백업
+    # 3. LLM 호출 필요 없는 경우 -> 종료 요청 아님 (None 반환)
     if not _should_invoke_llm(normalized):
-        return (False, 0.0, "no_llm_hint")
+        return None
 
     try:
         llm = get_llm_provider(llm_provider)
@@ -114,9 +111,14 @@ async def is_user_requested_session_end(
             max_tokens=300,
         )
 
-        should_end = bool(result.should_end and result.confidence >= confidence_threshold)
-        reasoning = "llm_confident" if should_end else "llm_not_confident"
-        return (should_end, float(result.confidence), reasoning)
+        if result.is_end_intent and result.confidence >= confidence_threshold:
+            return EndSessionRouterResult(
+                decision="end_session",
+                reasoning=f"LLM 감지 (신뢰도 {result.confidence:.2f}): {    result.reasoning}"
+            )
+            
+        return None
+    
     except Exception as e:
         logger.warning(f"session_end_intent llm failed: {type(e).__name__}: {e}")
-        return (False, 0.0, "llm_failed")
+        return None
