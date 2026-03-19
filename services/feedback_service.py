@@ -28,6 +28,10 @@ from schemas.feedback_v2 import (
     InterviewType,
     QuestionType,
     BadCaseResult,
+    QATurn,
+    RouterAnalysisTurn,
+    PortfolioTopicSummaryData,
+    CSTopicSummaryData,
 )
 
 from services.rubric_scorer import score_portfolio_rubric, score_cs_rubric
@@ -40,6 +44,7 @@ from graphs.nodes.CS.feedback_generator import feedback_generator
 from graphs.nodes.practice_answer_analyzer import practice_answer_analyzer
 from graphs.nodes.realmode_feedback_generator import feedback_generator_realmode
 from repositories.interview_turn_analysis_repo import InterviewTurnAnalysisRepository
+from repositories.session_topic_summary_repo import SessionTopicSummaryRepository
 
 from exceptions.exceptions import AppException
 from exceptions.error_messages import ErrorMessage
@@ -55,10 +60,12 @@ class FeedbackService:
     def __init__(
         self,
         turn_analysis_repo: InterviewTurnAnalysisRepository | None = None,
+        topic_summary_repo: SessionTopicSummaryRepository | None = None,
         turn_analysis_builder: TurnAnalysisBuilder | None = None,
         **_kwargs,
     ):
         self._turn_analysis_repo = turn_analysis_repo or InterviewTurnAnalysisRepository()
+        self._topic_summary_repo = topic_summary_repo or SessionTopicSummaryRepository()
         self._turn_analysis_builder = turn_analysis_builder or TurnAnalysisBuilder()
 
     @observe(name="generate_feedback_service")
@@ -154,19 +161,22 @@ class FeedbackService:
     async def _realmode_feedback(self, request: FeedbackRequest) -> FeedbackResponse:
         """실전모드: rule-based rubric → feedback_llm"""
 
-        router_analyses = request.router_analyses or []
+        if not request.session_id:
+            raise AppException(ErrorMessage.FEEDBACK_GENERATION_FAILED)
+
+        router_analyses, topic_summaries = await self._load_realmode_artifacts(
+            request
+        )
         
         # Step 1:question_type에 따라 router_analyses로 rule-based 루브릭 산출
         if request.question_type == QuestionType.PORTFOLIO:
             rubric_scores = score_portfolio_rubric(
                 router_analyses=router_analyses,
             )
-            topic_summaries = request.portfolio_topic_summaries
         elif request.question_type == QuestionType.CS:
             rubric_scores = score_cs_rubric(
                 router_analyses=router_analyses,
             )
-            topic_summaries = request.cs_topic_summaries
         else:
             logger.warning(
                 f"Unsupported question_type={request.question_type} "
@@ -175,6 +185,7 @@ class FeedbackService:
             rubric_scores = score_cs_rubric(
                 router_analyses=router_analyses,
             )
+            topic_summaries = []
         
         logger.info(
             f"Rubric scored (rule-based) | "
@@ -202,6 +213,124 @@ class FeedbackService:
             topics_feedback=feedback_result["topics_feedback"],
             overall_feedback=feedback_result["overall_feedback"],
         )
+
+    async def _load_realmode_artifacts(
+        self,
+        request: FeedbackRequest,
+    ) -> tuple[
+        list[RouterAnalysisTurn],
+        list[PortfolioTopicSummaryData] | list[CSTopicSummaryData],
+    ]:
+        """실전모드 피드백에 필요한 분석/요약 데이터를 DB에서 로드"""
+
+        turn_docs = await self._turn_analysis_repo.list_session_turn_analyses(
+            user_id=request.user_id,
+            session_id=request.session_id,
+            question_type=request.question_type,
+        )
+        topic_docs = await self._topic_summary_repo.list_session_topic_summaries(
+            user_id=request.user_id,
+            session_id=request.session_id,
+            question_type=request.question_type,
+        )
+
+        router_analyses = self._map_turn_docs_to_router_analyses(
+            turn_docs=turn_docs,
+            question_type=request.question_type,
+            interview_history=request.interview_history,
+        )
+        topic_summaries = self._map_topic_docs_to_summaries(
+            topic_docs=topic_docs,
+            question_type=request.question_type,
+        )
+
+        logger.info(
+            "Loaded realmode artifacts | session_id=%s | analyses=%s | summaries=%s",
+            request.session_id,
+            len(router_analyses),
+            len(topic_summaries),
+        )
+
+        return router_analyses, topic_summaries
+
+    @staticmethod
+    def _map_turn_docs_to_router_analyses(
+        *,
+        turn_docs: list[dict],
+        question_type: QuestionType,
+        interview_history: list[QATurn],
+    ) -> list[RouterAnalysisTurn]:
+        turn_type_by_order = {
+            turn.turn_order: turn.turn_type for turn in interview_history
+        }
+        analyses: list[RouterAnalysisTurn] = []
+
+        for doc in turn_docs:
+            analysis = doc.get("analysis") or {}
+            follow_up = doc.get("follow_up") or {}
+
+            common_fields = {
+                "topic_id": doc["topic_id"],
+                "turn_order": doc["turn_order"],
+                "turn_type": turn_type_by_order.get(doc["turn_order"], "new_topic"),
+                "is_well_structured": analysis.get("is_well_structured"),
+                "follow_up_direction": follow_up.get("direction"),
+            }
+
+            if question_type == QuestionType.PORTFOLIO:
+                analyses.append(
+                    RouterAnalysisTurn(
+                        **common_fields,
+                        completeness_detail=analysis.get("completeness"),
+                        has_evidence=analysis.get("has_evidence"),
+                        has_tradeoff=analysis.get("has_tradeoff"),
+                        has_problem_solving=analysis.get("has_problem_solving"),
+                    )
+                )
+            else:
+                analyses.append(
+                    RouterAnalysisTurn(
+                        **common_fields,
+                        correctness_detail=analysis.get("correctness"),
+                        has_error=analysis.get("has_error"),
+                        completeness_cs_detail=analysis.get("completeness"),
+                        has_missing_concepts=analysis.get("has_missing_concepts"),
+                        depth_detail=analysis.get("depth"),
+                        is_superficial=analysis.get("is_superficial"),
+                    )
+                )
+
+        return analyses
+
+    @staticmethod
+    def _map_topic_docs_to_summaries(
+        *,
+        topic_docs: list[dict],
+        question_type: QuestionType,
+    ) -> list[PortfolioTopicSummaryData] | list[CSTopicSummaryData]:
+        if question_type == QuestionType.PORTFOLIO:
+            return [
+                PortfolioTopicSummaryData(
+                    topic_id=doc["topic_id"],
+                    topic=doc["topic"],
+                    key_points=doc.get("key_points", []),
+                    gaps=doc.get("gaps", []),
+                    depth_reached=doc["depth_reached"],
+                    technologies_mentioned=doc.get("technologies_mentioned", []),
+                )
+                for doc in topic_docs
+            ]
+
+        return [
+            CSTopicSummaryData(
+                topic_id=doc["topic_id"],
+                topic=doc["topic"],
+                key_points=doc.get("key_points", []),
+                gaps=doc.get("gaps", []),
+                depth_reached=doc["depth_reached"],
+            )
+            for doc in topic_docs
+        ]
     
     # ============================================================
     # 공통

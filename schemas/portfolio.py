@@ -23,7 +23,7 @@ class Portfolio(BaseModel):
 class PortfolioAnalysisRequest(BaseModel):
     """포트폴리오 분석 요청 - Java 백엔드 → AI 서버"""
     user_id: int = Field(..., description="사용자 ID")
-    portfolio_id: str = Field(..., description="포트폴리오 ID")
+    portfolio_id: int = Field(..., description="포트폴리오 ID")
     portfolio: Portfolio = Field(..., description="포트폴리오 정보")
 
 
@@ -103,6 +103,6 @@ class PortfolioAnalysisProfileOutput(BaseModel):
 
 class PortfolioAnalysisAckData(BaseModel):
     user_id: int = Field(..., description="사용자 ID")
-    portfolio_id: str = Field(..., description="포트폴리오 ID")
+    portfolio_id: int = Field(..., description="포트폴리오 ID")
 
 PortfolioAnalysisResponse = BaseResponse[PortfolioAnalysisAckData]

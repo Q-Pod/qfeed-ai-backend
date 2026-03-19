@@ -194,30 +194,6 @@ class RubricScore(BaseModel):
     score: int = Field(..., description="루브릭 점수 (1-5)")
 
 
-class RubricEvaluationResult(BaseModel):
-    """Legacy compatibility schema for older tests/tools."""
-
-    accuracy: int = Field(..., ge=1, le=5, description="정확도")
-    logic: int = Field(..., ge=1, le=5, description="논리력")
-    specificity: int = Field(..., ge=1, le=5, description="구체성")
-    completeness: int = Field(..., ge=1, le=5, description="완성도")
-    delivery: int = Field(..., ge=1, le=5, description="전달력")
-    accuracy_rationale: str | None = None
-    logic_rationale: str | None = None
-    specificity_rationale: str | None = None
-    completeness_rationale: str | None = None
-    delivery_rationale: str | None = None
-
-    def to_metrics_list(self) -> list[RubricScore]:
-        return [
-            RubricScore(name="정확도", score=self.accuracy),
-            RubricScore(name="논리력", score=self.logic),
-            RubricScore(name="구체성", score=self.specificity),
-            RubricScore(name="완성도", score=self.completeness),
-            RubricScore(name="전달력", score=self.delivery),
-        ]
-
-
 class FeedbackContent(BaseModel):
     """Legacy compatibility schema for older tests/tools."""
 
@@ -307,7 +283,7 @@ class CSTopicSummaryData(BaseModel):
 class PortfolioRubricScores(BaseModel):
     """포트폴리오 루브릭 점수 (5개 지표)
 
-    실전모드: rule-based scorer가 router_analyses + topic_summaries로 산출
+    실전모드: rule-based scorer가 router_analyses로 산출
     """
     evidence: int = Field(..., ge=1, le=5, description="근거 제시력")
     tradeoff: int = Field(..., ge=1, le=5, description="트레이드오프 인식")
@@ -394,8 +370,8 @@ class FeedbackRequest(BaseModel):
     interview_type에 따라 필요한 필드가 다르다.
 
     연습모드 필수: question_id, keywords
-    실전모드 필수: session_id, router_analyses
-    실전모드 포트폴리오: topic_summaries 추가
+    실전모드 필수: session_id
+    실전모드의 router_analyses / topic_summaries는 서버가 DB에서 조회한다.
     """
     user_id: int = Field(..., description="사용자 ID")
     interview_type: InterviewType = Field(..., description="면접 유형")
@@ -412,16 +388,6 @@ class FeedbackRequest(BaseModel):
 
     # 실전모드 전용
     session_id: str | None = Field(None, description="면접 세션 ID (실전모드)")
-    router_analyses: list[RouterAnalysisTurn] | None = Field(
-        None, description="매 턴의 라우터 분석 결과 (실전모드)"
-    )
-    # 유형별 TopicSummary — 둘 중 하나만 존재
-    portfolio_topic_summaries: list[PortfolioTopicSummaryData] | None = Field(
-        None, description="포트폴리오 토픽별 요약 (루브릭 산출 + 피드백 생성)"
-    )
-    cs_topic_summaries: list[CSTopicSummaryData] | None = Field(
-        None, description="CS 토픽별 요약 (루브릭 산출 + 피드백 생성)"
-    )
 
 
 # ============================================================

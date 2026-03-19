@@ -31,7 +31,7 @@ class PortfolioQuestionPoolGenerator:
         self,
         *,
         user_id: int,
-        portfolio_id: str,
+        portfolio_id: int,
         analysis_profile: PortfolioAnalysisProfileDocument,
     ) -> list[PortfolioQuestionPoolDocument]:
         llm_provider = get_llm_provider("gemini")
@@ -66,7 +66,7 @@ class PortfolioQuestionPoolGenerator:
         *,
         raw_items: list[PortfolioQuestionPoolItemOutput],
         user_id: int,
-        portfolio_id: str,
+        portfolio_id: int,
     ) -> list[PortfolioQuestionPoolDocument]:
         """LLM 출력을 MongoDB Document로 변환 + 태그 정규화"""
 

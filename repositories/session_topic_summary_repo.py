@@ -6,6 +6,7 @@ from pymongo import ASCENDING
 
 from core.logging import get_logger
 from core.mongodb import get_collection
+from schemas.feedback_v2 import InterviewType, QuestionType
 
 logger = get_logger(__name__)
 
@@ -56,3 +57,28 @@ class SessionTopicSummaryRepository:
             payload["session_id"],
             payload["topic_id"],
         )
+
+    async def list_session_topic_summaries(
+        self,
+        *,
+        user_id: int,
+        session_id: str,
+        question_type: QuestionType,
+        interview_type: InterviewType = InterviewType.REAL_INTERVIEW,
+    ) -> list[dict]:
+        """세션 단위 토픽 요약 조회"""
+        collection = get_collection(self.COLLECTION_NAME)
+
+        cursor = collection.find(
+            {
+                "user_id": user_id,
+                "session_id": session_id,
+                "question_type": question_type,
+                "interview_type": interview_type,
+            }
+        ).sort([("topic_id", 1)])
+
+        docs = await cursor.to_list(length=None)
+        for doc in docs:
+            doc.pop("_id", None)
+        return docs

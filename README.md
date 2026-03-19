@@ -102,13 +102,13 @@ uv run python scripts/run_weakness_batch.py
 
 ## 5. API 엔드포인트
 
-| Method | Endpoint                          | 설명                             |
-| ------ | --------------------------------- | -------------------------------- |
-| `POST` | `/ai/stt`                         | 음성 파일을 텍스트로 변환        |
-| `POST` | `/ai/interview/feedback/request`  | AI 피드백 생성 요청              |
-| `POST` | `/ai/interview/follow-up`         | 질문 생성(new_topic, follow_up)  |
-| `POST` | `/ai/interview/feedback/generate` | 피드백 생성 결과 전송 (Callback) |
-| `POST` | `/ai/tts`                         | 텍스트를 음성 파일로 변환        |
+| Method | Endpoint                            | 설명                            |
+| ------ | ----------------------------------- | ------------------------------- |
+| `POST` | `/ai/stt`                           | 음성 파일을 텍스트로 변환       |
+| `POST` | `/ai/interview/feedback/request`    | AI 피드백 생성 요청             |
+| `POST` | `/ai/interview/follow-up/questions` | 질문 생성(new_topic, follow_up) |
+| `POST` | `/ai/tts`                           | 텍스트를 음성 파일로 변환       |
+| `POST` | `/ai/portfolio`                     | 포트폴리오 분석 및 질문 풀 생성 |
 
 ---
 
