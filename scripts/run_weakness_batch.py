@@ -4,15 +4,17 @@ import argparse
 import asyncio
 import sys
 from pathlib import Path
+from core.config import get_settings
+from core.logging import get_logger, setup_logging
+from core.mongodb import close_mongo_client, ping_mongo
+from services.weakness_batch_service import WeaknessBatchService
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from core.config import get_settings
-from core.logging import get_logger, setup_logging
-from core.mongodb import close_mongo_client, ping_mongo
-from services.weakness_batch_service import WeaknessBatchService
+
+
 
 
 async def _main(batch_size: int) -> None:

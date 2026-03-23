@@ -9,8 +9,6 @@ Taxonomy 로더 유틸리티
 """
 
 from __future__ import annotations
-
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any

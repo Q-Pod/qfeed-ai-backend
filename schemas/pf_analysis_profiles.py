@@ -1,4 +1,3 @@
-from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 from schemas.portfolio import PortfolioProjectSummary

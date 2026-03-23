@@ -33,7 +33,7 @@ async def cs_new_topic_generator(state: QuestionState) -> dict:
     current_topic_id = state.get("current_topic_id", 0)
     current_topic_count = state.get("current_topic_count", 0)
     new_topic_id = current_topic_id + 1
-    interview_history = state.get("interview_history", [])
+    # interview_history = state.get("interview_history", [])
     router_analysis = state.get("router_analysis")
 
     valid_categories = get_valid_categories(QuestionType.CS)

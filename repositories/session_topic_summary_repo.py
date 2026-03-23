@@ -2,7 +2,6 @@
 
 from datetime import datetime, timezone
 
-from pymongo import ASCENDING
 
 from core.logging import get_logger
 from core.mongodb import get_collection

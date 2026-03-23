@@ -14,7 +14,6 @@ from collections import defaultdict
 
 from graphs.feedback.state import FeedbackGraphState, QATurn
 from schemas.feedback_v2 import OverallFeedback
-from schemas.feedback_v2 import QuestionType
 from prompts.feedback_practice_mode import (
     get_practice_feedback_system_prompt,
     build_practice_feedback_prompt,

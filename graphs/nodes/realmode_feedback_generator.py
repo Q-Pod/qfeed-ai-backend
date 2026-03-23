@@ -11,11 +11,9 @@
     - 분석이 이미 끝났으므로 LLM은 피드백 텍스트 생성에만 집중
     - 질문 유형별(CS/포트폴리오) 프롬프트 분리
 """
-
-from collections import defaultdict
-
-from schemas.feedback_v2 import QATurn, QuestionType
 from schemas.feedback_v2 import (
+    QATurn, 
+    QuestionType,
     RouterAnalysisTurn,
     PortfolioTopicSummaryData,
     CSTopicSummaryData, 

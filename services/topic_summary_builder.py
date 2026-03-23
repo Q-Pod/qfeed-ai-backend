@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 from core.logging import get_logger
-from schemas.feedback_v2 import InterviewType, QuestionType
+from schemas.feedback_v2 import InterviewType
 from schemas.question import QuestionGenerateRequest
 from schemas.seesion_topic_summaries import SessionTopicSummaryDocument
 

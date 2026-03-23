@@ -13,8 +13,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 from schemas.feedback_v2 import InterviewType, QuestionType
 from schemas.feedback_v2 import FeedbackRequest, RouterAnalysisTurn
 from schemas.question import QuestionGenerateRequest
@@ -104,7 +102,6 @@ class TurnAnalysisBuilder:
             MongoDB에 저장할 턴 분석 문서
         """
         last_turn = request.interview_history[-1]
-        now = datetime.now(timezone.utc)
 
         return InterviewTurnAnalysisDocument(
             # ── 세션 메타 ──

@@ -3,7 +3,7 @@
 """사용자 발화에서 '면접 종료' 요청 여부 감지 (룰 + LLM 백업)"""
 
 import re
-from typing import Literal, Optional
+from typing import Optional
 
 from core.dependencies import get_llm_provider
 from core.logging import get_logger

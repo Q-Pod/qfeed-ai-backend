@@ -10,11 +10,6 @@
     3. Gemini 멀티모달 호출: 텍스트 + 이미지 → 요약 + 질문 풀
     4. question_id 부여 후 응답 반환
 """
-
-import base64
-
-from google.genai import types
-
 from langfuse import observe
 from core.logging import get_logger
 
