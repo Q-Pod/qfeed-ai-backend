@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     ELEVENLABS_API_KEY: str
     ELEVENLABS_VOICE_IDS: str = "a52RveZOORPA9buQulXm,z6Kj0hecH20CdetSElRT,pb3lVZVjdFWbkhPKlelB" #daehyeok,jennie,harry
     ELEVENLABS_MODEL_ID: str = "eleven_flash_v2_5"
+    ELEVENLABS_BASE_URL: str = "https://api.elevenlabs.io/v1"
 
     @property
     def elevenlabs_voice_id_list(self) -> list[str]:
