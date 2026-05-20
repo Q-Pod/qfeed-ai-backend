@@ -272,6 +272,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Update Helm image tag in Cloud repo
+        run: |
+          # private Cloud 레포 clone
+          git clone https://x-access-token:${{ secrets.CLOUD_REPO_PAT }}@github.com/Q-Pod/qfeed-infra.git cloud-repo
+          cd cloud-repo
+
+          # values-prod.yaml의 image.tag를 현재 커밋 SHA로 교체
+          sed -i "s/  tag: .*/  tag: \"${{ steps.meta.outputs.short_sha }}\"/" \
+            k8s/helm/qfeed-ai/values-prod.yaml
+
+          # 변경사항 커밋 & 푸시 → ArgoCD가 감지하여 자동 배포
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add k8s/helm/qfeed-ai/values-prod.yaml
+          git commit -m "chore: update ai image tag to ${{ steps.meta.outputs.short_sha }}"
+          git push
+
       - name: Deploy via SSM
         id: ssm-deploy
         run: |
