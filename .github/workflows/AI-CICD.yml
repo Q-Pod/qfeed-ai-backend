@@ -274,7 +274,7 @@ jobs:
 
       - name: Update Helm image tag in Cloud repo
         run: |
-          # private Cloud 레포 clone
+          # Cloud 레포 clone
           git clone https://x-access-token:${{ secrets.CLOUD_REPO_PAT }}@github.com/Q-Pod/qfeed-infra.git cloud-repo
           cd cloud-repo
 
